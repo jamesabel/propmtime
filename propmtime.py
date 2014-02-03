@@ -7,13 +7,13 @@ if __name__ == "__main__":
     desc = """Many OSs (including Windows) only change the modification time of a folder/directory based on its
 immediate children.  This code analyzes a folder and all of its children, and propagates (changes) the
 modification times of each folder to be the most recent time of all of its children."""
-    epi = [
-'Examples:',
-'propmtime.py -p documents          # process all normal files in the "documents" folder',
-'propmtime.py -p documents -a h s   # process hidden and system files as well as normal files',
-'propmtime.py -p documents -a s -v  # process system files as well as normal files, and turn on verbose'
-]
-    parser = argparse.ArgumentParser(epilog=epi)
+    epi = """
+Examples:
+propmtime.py -p documents          # process all normal files in the "documents" folder
+propmtime.py -p documents -a h s   # process hidden and system files as well as normal files
+propmtime.py -p documents -a s -v  # process system files as well as normal files, and turn on verbose
+"""
+    parser = argparse.ArgumentParser(epilog=epi, description=desc, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-v', '--verbose', action='store_true', default = False)
     parser.add_argument("-p", "--path", help="path to folder or directory")
     parser.add_argument("-a", "--attrib", nargs = "+", default = (''),
