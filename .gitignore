@@ -36,5 +36,10 @@ nosetests.xml
 .pydevproject
 
 # jca
+# MANIFEST created by setup
+MANIFEST
+# .idea comes from PyCharm
 .idea
+# generally ignore temp stuff
+temp.*
 temp/
