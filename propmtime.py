@@ -15,7 +15,7 @@ propmtime.py -p documents -a s -v  # process system files as well as normal file
 """
     parser = argparse.ArgumentParser(epilog=epi, description=desc, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-v', '--verbose', action='store_true', default = False)
-    parser.add_argument("-p", "--path", help="path to folder or directory")
+    parser.add_argument("-p", "--path", required=True, help="path to folder or directory")
     parser.add_argument("-a", "--attrib", nargs = "+", default = (''),
                         help="""ATTRIB can be h(idden) and/or s(ystem)to process hidden and/or system files.
 Default is to ignore hidden and system files."""
