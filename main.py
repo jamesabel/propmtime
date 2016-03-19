@@ -34,9 +34,10 @@ def main(parsed_args):
         pmt.print_stats()
 
 if __name__ == "__main__":
-    desc = """Many OSs (including Windows) only change the modification time of a folder/directory based on its
-immediate children.  This code analyzes a folder and all of its children, and propagates (changes) the
-modification times of each folder to be the most recent time of all of its children."""
+    desc = """Many OSs (including Windows) only change the modification time of a folder/directory based on its immediate children.
+This code analyzes a folder and all of its children, and propagates (changes) the modification times of each folder to
+be the most recent time of all of its children.""" \
++ "\n\nbuild : " + build.timestamp
     epi = """
 Examples:
 propmtime -p documents          # process all normal files in the "documents" folder
