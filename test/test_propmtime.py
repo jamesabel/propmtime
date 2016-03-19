@@ -79,7 +79,7 @@ class TestPropmtime(unittest.TestCase):
         self.compare_times(os.path.getmtime(self.root), self.system.get_time())
 
     def compare_times(self, t1, t2):
-        scale = 10 # get within this # of sec
+        scale = 10  # get within this # of sec
         t1 /= scale
         t2 /= scale
         self.assertAlmostEqual(t1, t2, places=1)
