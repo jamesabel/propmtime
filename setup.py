@@ -1,11 +1,13 @@
 import distutils
+import os
 import py2exe
+import propmtime.timestamp
 
 distutils.core.setup(
     console=['main.py'],
 
     name="propmtime",
-    version="0.0",
+    version=propmtime.timestamp.timestamp(),
     author='James Abel',
     author_email='j@abel.co',
     url='www.lat.us',
@@ -19,3 +21,4 @@ distutils.core.setup(
 
     zipfile = None,
 )
+
