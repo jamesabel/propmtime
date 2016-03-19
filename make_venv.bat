@@ -1,0 +1,1 @@
+c:\python34\Scripts\virtualenv.exe --clear --system-site-packages venvc:\python34\scripts\virtualenv.exe

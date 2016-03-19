@@ -2,7 +2,7 @@ import distutils
 import py2exe
 
 distutils.core.setup(
-    console=['propmtime.py'],
+    console=['main.py'],
 
     name="propmtime",
     version="0.0",
