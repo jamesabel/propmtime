@@ -3,12 +3,12 @@ import argparse
 import os
 from propmtime import propmtime
 from propmtime import util
-from propmtime import timestamp
+from propmtime import build
 
 
 def main(parsed_args):
     if parsed_args.verbose:
-        print('build : %s' % timestamp.timestamp())
+        print('build : %s' % build.timestamp)
     process_hidden = False
     process_system = False
     for a in parsed_args.attrib:

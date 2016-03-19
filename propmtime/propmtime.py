@@ -11,6 +11,7 @@ import time
 import propmtime.util
 import win32con
 
+
 class Propmtime():
     def __init__(self, root, process_hidden = False, process_system = False, print_flag = False):
         self.root = root

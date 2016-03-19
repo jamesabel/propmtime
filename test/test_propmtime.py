@@ -7,7 +7,8 @@ import win32api
 import win32con
 import time
 import propmtime.propmtime
-import propmtime.timestamp
+import propmtime.build
+import propmtime.write_timestamp
 
 
 class FileCreator():
@@ -84,7 +85,7 @@ class TestPropmtime(unittest.TestCase):
         self.assertAlmostEqual(t1, t2, places=1)
 
     def test_timestamp(self):
-        ts = propmtime.timestamp.timestamp()
+        ts = propmtime.build.timestamp
 
     def test_main(self):
         from main import main

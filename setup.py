@@ -1,13 +1,15 @@
 import distutils
-import os
 import py2exe
-import propmtime.timestamp
+from propmtime import write_timestamp
+from propmtime import build
+
+write_timestamp.write_timestamp()
 
 distutils.core.setup(
     console=['main.py'],
 
     name="propmtime",
-    version=propmtime.timestamp.timestamp(),
+    version=build.timestamp,
     author='James Abel',
     author_email='j@abel.co',
     url='www.lat.us',
