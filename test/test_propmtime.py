@@ -8,12 +8,13 @@ import win32api
 import win32con
 import time
 
+
 class FileCreator():
     """
     file creator
     """
-    def __init__(self, current_time, dir, file_name, time_offset, attributes = win32con.FILE_ATTRIBUTE_NORMAL):
-        self.dir = dir
+    def __init__(self, current_time, ldir, file_name, time_offset, attributes=win32con.FILE_ATTRIBUTE_NORMAL):
+        self.dir = ldir
         os.makedirs(self.dir, exist_ok=True)
         self.full_path = os.path.join(self.dir, file_name)
         self.time_offset = time_offset
@@ -25,14 +26,12 @@ class FileCreator():
         self.mtime = self.current_time - (time_offset * self.time_offset_unit)
         os.utime(self.full_path, (self.mtime, self.mtime))
 
-    def get_full_path(self):
-        return self.full_path
-
     def get_time_offset_unit(self):
         return self.time_offset_unit
 
     def get_time(self):
         return self.mtime
+
 
 class TestPropmtime(unittest.TestCase):
 
@@ -82,6 +81,15 @@ class TestPropmtime(unittest.TestCase):
         t1 /= scale
         t2 /= scale
         self.assertAlmostEqual(t1, t2, places=1)
+
+    def test_main(self):
+        from main import main
+
+        class ParsedArgs:
+            verbose = False
+            attrib = []
+            path = '.'
+        main(ParsedArgs())
 
 if __name__ == "__main__":
     unittest.main()
