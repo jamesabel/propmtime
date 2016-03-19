@@ -3,6 +3,7 @@ import os
 import time
 import temp.timestamp
 
+# mainly for the 'frozen' app
 
 def timestamp():
     write_timestamp()
