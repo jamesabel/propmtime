@@ -17,6 +17,9 @@ class Propmtime():
         self.process_hidden = process_hidden
         self.process_system = process_system
         self.print_flag = print_flag
+        self.total_time = None
+        self.error_count = None
+        self.files_folders_count = None
 
     def run(self):
         self.error_count = 0
