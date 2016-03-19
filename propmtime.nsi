@@ -8,7 +8,7 @@ Name "propmtime"
 ; The file to write
 OutFile "dist\install_propmtime.exe"
 
-!define SUITENAME "latus"
+!define SUITENAME "abel"
 !define APPNAME "propmtime"
 !define APPEXE "${APPNAME}.exe"
 
