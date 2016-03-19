@@ -3,10 +3,11 @@ import tempfile
 import os
 import shutil
 import unittest
-import propmtime.propmtime
 import win32api
 import win32con
 import time
+import propmtime.propmtime
+import propmtime.timestamp
 
 
 class FileCreator():
@@ -82,11 +83,14 @@ class TestPropmtime(unittest.TestCase):
         t2 /= scale
         self.assertAlmostEqual(t1, t2, places=1)
 
+    def test_timestamp(self):
+        ts = propmtime.timestamp.timestamp()
+
     def test_main(self):
         from main import main
 
         class ParsedArgs:
-            verbose = False
+            verbose = True
             attrib = []
             path = '.'
         main(ParsedArgs())
