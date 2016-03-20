@@ -1,12 +1,12 @@
 
-import tempfile
+from datetime import datetime
 import os
 import shutil
 import unittest
 import win32api
 import win32con
 import time
-import propmtime.propmtime
+from propmtime.propmtime import Propmtime, FileMTime
 import propmtime.build
 import propmtime.write_timestamp
 
@@ -15,7 +15,7 @@ class FileCreator():
     """
     file creator
     """
-    def __init__(self, current_time, ldir, file_name, time_offset, attributes=win32con.FILE_ATTRIBUTE_NORMAL):
+    def __init__(self, current_time, ldir, file_name, time_offset = 0, attributes=win32con.FILE_ATTRIBUTE_NORMAL):
         self.dir = ldir
         os.makedirs(self.dir, exist_ok=True)
         self.full_path = os.path.join(self.dir, file_name)
@@ -38,45 +38,53 @@ class FileCreator():
 class TestPropmtime(unittest.TestCase):
 
     def setUp(self):
-        self.root = tempfile.mkdtemp()
+        self.root = 'data'
         print("temp testing dir", self.root)
         self.child = os.path.join(self.root, 'temp2')
-        if os.path.exists(self.root):
-            shutil.rmtree(self.root)
+        if os.path.exists(self.child):
+            shutil.rmtree(self.child)
         self.current_time = time.time() # one time base for all
 
         # make normal the earliest so we can test system and hidden
         self.system = FileCreator(self.current_time, self.child, 'system.txt', 1, win32con.FILE_ATTRIBUTE_SYSTEM)
         self.hidden = FileCreator(self.current_time, self.child, 'hidden.txt', 2, win32con.FILE_ATTRIBUTE_HIDDEN)
         self.normal = FileCreator(self.current_time, self.child, 'normal.txt', 3)
+        self.file_with_date_style_a = FileCreator(self.current_time, self.root, '2016_01_01_01_01_01.txt')
+        self.file_with_date_style_b = FileCreator(self.current_time, self.root, 'some_string_1_1_16.txt')
 
         # todo: have this not require some arbitrary instance line 'normal'
         self.root_dir_init_offset = 4
         folder_mtime = self.current_time - self.normal.get_time_offset_unit() * self.root_dir_init_offset
         os.utime(self.root, (folder_mtime, folder_mtime))
 
-    def tearDown(self):
-        shutil.rmtree(self.root)
-
     def test_normal(self):
-        pmt = propmtime.propmtime.Propmtime(self.root, print_flag=True)
+        pmt = Propmtime(self.root, FileMTime.do_nothing, print_flag=True)
+        pmt.run()
+        self.compare_times(os.path.getmtime(self.child), self.normal.get_time())
+
+    def test_normal_file_mtime_simulate(self):
+        pmt = Propmtime(self.root, FileMTime.show_differences, print_flag=True)
+        pmt.run()
+
+    def test_normal_file_mtime_update(self):
+        pmt = Propmtime(self.root, FileMTime.update_mtime, print_flag=True)
         pmt.run()
         self.compare_times(os.path.getmtime(self.root), self.normal.get_time())
 
     def test_hidden(self):
-        pmt = propmtime.propmtime.Propmtime(self.root, process_hidden=True, print_flag=True)
+        pmt = Propmtime(self.root, FileMTime.do_nothing, process_hidden=True, print_flag=True)
         pmt.run()
-        self.compare_times(os.path.getmtime(self.root), self.hidden.get_time())
+        self.compare_times(os.path.getmtime(self.child), self.hidden.get_time())
 
     def test_system(self):
-        pmt = propmtime.propmtime.Propmtime(self.root, process_system=True, print_flag=True)
+        pmt = Propmtime(self.root, FileMTime.do_nothing, process_system=True, print_flag=True)
         pmt.run()
-        self.compare_times(os.path.getmtime(self.root), self.system.get_time())
+        self.compare_times(os.path.getmtime(self.child), self.system.get_time())
 
     def test_all(self):
-        pmt = propmtime.propmtime.Propmtime(self.root, process_hidden=True, process_system=True, print_flag=True)
+        pmt = Propmtime(self.root, FileMTime.do_nothing, process_hidden=True, process_system=True, print_flag=True)
         pmt.run()
-        self.compare_times(os.path.getmtime(self.root), self.system.get_time())
+        self.compare_times(os.path.getmtime(self.child), self.system.get_time())
 
     def compare_times(self, t1, t2):
         scale = 10  # get within this # of sec
@@ -86,6 +94,7 @@ class TestPropmtime(unittest.TestCase):
 
     def test_timestamp(self):
         ts = propmtime.build.timestamp
+        print(ts)
 
     def test_main(self):
         from main import main
@@ -94,6 +103,8 @@ class TestPropmtime(unittest.TestCase):
             verbose = True
             attrib = []
             path = '.'
+            update = True
+            simulate = False
         main(ParsedArgs())
 
 if __name__ == "__main__":

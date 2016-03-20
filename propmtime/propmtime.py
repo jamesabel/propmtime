@@ -10,11 +10,21 @@ import os
 import time
 import propmtime.util
 import win32con
+from datetime import datetime, timedelta
+from enum import Enum
+from propmtime.file_mtime import get_mtime_from_file_name
+
+
+class FileMTime(Enum):
+    do_nothing = 1
+    show_differences = 2
+    update_mtime = 3
 
 
 class Propmtime():
-    def __init__(self, root, process_hidden = False, process_system = False, print_flag = False):
+    def __init__(self, root, file_mtime, process_hidden=False, process_system=False, print_flag=False):
         self.root = root
+        self.file_mtime = file_mtime
         self.process_hidden = process_hidden
         self.process_system = process_system
         self.print_flag = print_flag
@@ -34,7 +44,8 @@ class Propmtime():
                     long_full_path = propmtime.util.get_long_abs_path(os.path.join(walk_path, fs_obj))
 
                     # decide if we're going to process this file
-                    process_the_file = self.process_hidden and self.process_system # if were processing all files, avoid the call to get the attributes
+                    # if were processing all files, avoid the call to get the attributes
+                    process_the_file = self.process_hidden and self.process_system
                     if not process_the_file:
                         file_attrib = propmtime.util.get_file_attributes(long_full_path)
                         process_the_file = not file_attrib or \
@@ -53,6 +64,20 @@ class Propmtime():
                             if self.print_flag:
                                 print('WindowsError', long_full_path)
                             self.error_count += 1
+
+                        # adjust the mtime if it's off
+                        if self.file_mtime != FileMTime.do_nothing:
+                            file_name_mtime = get_mtime_from_file_name(long_full_path)
+                            if file_name_mtime is not None:
+                                if abs(mtime - file_name_mtime.timestamp()) > timedelta(days=1).total_seconds():
+                                    print('mtime missmatch: %s (os:%s, filename:%s)' % (long_full_path,
+                                                                                        str(datetime.fromtimestamp(mtime)),
+                                                                                        str(file_name_mtime)))
+                                    if self.file_mtime is FileMTime.update_mtime:
+                                        print('updating mtime to %s' % file_name_mtime.strftime('%c'))
+                                        mtime = file_name_mtime.timestamp()
+                                        os.utime(long_full_path, (mtime, mtime))
+
                         # make sure it's still not in the future ... if it is, ignore it
                         if mtime <= start_time:
                             latest_time = max(mtime, latest_time)
@@ -73,6 +98,6 @@ class Propmtime():
     def print_stats(self):
         if self.error_count > 0:
             print((self.error_count, "total errors"))
-        print(("total files/folders/directories:", self.files_folders_count))
-        print(("elapsed time:", self.total_time, "sec"))
+        print("total files/folders/directories : %s" % self.files_folders_count)
+        print("elapsed time : %s" % self.total_time, "sec")
 
