@@ -42,27 +42,19 @@ This code analyzes a folder and all of its children, and propagates (changes) th
 be the most recent time of all of its children.""" \
 + "\n\nbuild : " + build.timestamp
     epi = """
-file mtime substring must follow the following convention:
-- have a substring at the end of the main part of the file name (before the file extension) that is
-  <month><delimiter><day><delimiter><year>.  A common delimiters is underscore (_), but it can also be whitespace characters.
-- month is 1-12 (1=Jan, 2=Feb, etc.) or a string that uniquely identified the month.
-- day is 1-31
-- year is 2 or 4 digits.  If it's 2 digits, if they are greater than the current 2 digit year then the base is assumed
-  to be 19xx.  If not the base is 20xx.
-
-Examples:
-propmtime -p documents          # process all normal files in the "documents" folder
-propmtime -p documents -a h s   # process hidden and system files as well as normal files
-propmtime -p documents -a s -v  # process system files as well as normal files, and turn on verbose
+file mtime examples:
+ hi_there_1_2_16.txt  # year can be 2 or 4 digits
+ Fri_Dec_28_21_22_21_2007.jpg
+ 2016_02_28_11_07_15.jpg
 """
     parser = argparse.ArgumentParser(epilog=epi, description=desc, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-v', '--verbose', action='store_true', default=False)
     parser.add_argument('-u', '--update', action='store_true', default=False,
-                        help='Update the file mtime to a value derived from the file name with the pattern described below.')
+                        help='Update the file mtime to a value derived from the file name with the pattern described below. (default=False)')
     parser.add_argument('-s', '--silent', action='store_true', default=False,
-                        help='Do not print messages when file mtimes do not match file name format.  Use when you only want folder mtime updates (not files).')
-    parser.add_argument("-p", "--path", default=".", help="Path to folder or directory")
-    parser.add_argument("-a", "--attrib", nargs="+", default=(''),
+                        help='Do not print messages when file mtimes do not match file name format.  Use when you only want folder mtime updates (not files). (default=False')
+    parser.add_argument("-p", "--path", default=".", help='Path to folder or directory.  (default=".")')
+    parser.add_argument("-a", "--attrib", nargs="+", default='',
                         help="""ATTRIB can be h(idden) and/or s(ystem)to process hidden and/or system files.
 Default is to ignore hidden and system files."""
     )
