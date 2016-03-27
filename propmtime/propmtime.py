@@ -74,21 +74,28 @@ class Propmtime():
                             # determine if the mtime is different than what's encoded in the file name
                             file_name_mtime = get_mtime_from_file_name(long_full_path)
                             if file_name_mtime is not None:
-                                ts = file_name_mtime.timestamp()
-                                # use a fairly wide window to allow for passing through time zones
-                                window = 1  # days
-                                if abs(mtime - ts) > timedelta(days=window).total_seconds():
-                                    print('mtime missmatch: %s (os:%s, filename:%s)' % (long_full_path,
-                                          str(datetime.fromtimestamp(mtime)), str(file_name_mtime)))
-                                    if self.do_update:
-                                        # adjust the mtime if it's off
-                                        if self.verbose:
-                                            print('updating mtime to %s' % file_name_mtime.strftime('%c'))
-                                        os.utime(long_full_path, (ts, ts))
-                                        mtime = ts
+                                try:
+                                    ts = file_name_mtime.timestamp()
+                                except OverflowError as e:
+                                    print(e, long_full_path)
+                                    ts = None
+                                    mtime = None
+                                if ts is not None:
+                                    # use a fairly wide window to allow for passing through time zones
+                                    window = 1  # days
+                                    if abs(mtime - ts) > timedelta(days=window).total_seconds():
+                                        if not self.silent:
+                                            print('mtime missmatch: %s (os:%s, filename:%s)' % (long_full_path,
+                                                  str(datetime.fromtimestamp(mtime)), str(file_name_mtime)))
+                                        if self.do_update:
+                                            # adjust the mtime if it's off
+                                            if self.verbose:
+                                                print('updating mtime to %s' % file_name_mtime.strftime('%c'))
+                                            os.utime(long_full_path, (ts, ts))
+                                            mtime = ts
 
                             # make sure it's still not in the future ... if it is, ignore it
-                            if mtime and mtime <= start_time:
+                            if mtime is not None and mtime <= start_time:
                                 latest_time = max(mtime, latest_time)
 
                 long_path = propmtime.util.get_long_abs_path(walk_path)
