@@ -4,10 +4,10 @@ import os
 import win32api
 import win32con
 import pywintypes
-import inspect
 
 WINDOWS_SEP = "\\"
 LINUX_SEP = '/'
+
 
 def get_folder_sep():
     if is_windows():
@@ -16,17 +16,16 @@ def get_folder_sep():
         sep = LINUX_SEP
     return sep[-1]
 
-def get_file_attributes(in_path):
+
+def get_file_attributes(in_path, verbose):
     attrib = 0
     attributes = set()
     if is_windows():
-        #long_abs_path = get_long_abs_path(in_path)
-        long_abs_path = in_path
         try:
-            attrib = win32api.GetFileAttributes(long_abs_path)
-        except pywintypes.error:
-            print('Exception', 'pywintypes', long_abs_path)
-            print(inspect.getframeinfo(inspect.currentframe()))
+            attrib = win32api.GetFileAttributes(in_path)
+        except pywintypes.error as e:
+            if verbose:
+                print(e, in_path)
         if attrib & win32con.FILE_ATTRIBUTE_HIDDEN:
             attributes.add(win32con.FILE_ATTRIBUTE_HIDDEN)
         if attrib & win32con.FILE_ATTRIBUTE_SYSTEM:
@@ -34,7 +33,7 @@ def get_file_attributes(in_path):
     # todo : Linux version of this
     return attributes
 
-# @lru_cache()
+
 def is_windows():
     is_win = False
     plat = platform.system()
@@ -42,6 +41,7 @@ def is_windows():
     if plat[0] == 'w':
         is_win = True
     return is_win
+
 
 def get_long_abs_path(in_path):
     if in_path is None:

@@ -11,23 +11,18 @@ import time
 import propmtime.util
 import win32con
 from datetime import datetime, timedelta
-from enum import Enum
+import inspect
 from propmtime.file_mtime import get_mtime_from_file_name
 
 
-class FileMTime(Enum):
-    do_nothing = 1
-    show_differences = 2
-    update_mtime = 3
-
-
 class Propmtime():
-    def __init__(self, root, file_mtime, process_hidden=False, process_system=False, print_flag=False):
+    def __init__(self, root, do_update, silent, process_hidden=False, process_system=False, verbose=False):
         self.root = root
-        self.file_mtime = file_mtime
+        self.do_update = do_update
         self.process_hidden = process_hidden
         self.process_system = process_system
-        self.print_flag = print_flag
+        self.silent = silent
+        self.verbose = verbose
         self.total_time = None
         self.error_count = None
         self.files_folders_count = None
@@ -47,51 +42,68 @@ class Propmtime():
                     # if were processing all files, avoid the call to get the attributes
                     process_the_file = self.process_hidden and self.process_system
                     if not process_the_file:
-                        file_attrib = propmtime.util.get_file_attributes(long_full_path)
+                        file_attrib = propmtime.util.get_file_attributes(long_full_path, self.verbose)
                         process_the_file = not file_attrib or \
                                            (self.process_hidden and win32con.FILE_ATTRIBUTE_HIDDEN in file_attrib) or\
                                            (self.process_system and win32con.FILE_ATTRIBUTE_SYSTEM in file_attrib)
 
                     if process_the_file:
                         self.files_folders_count += 1
+
+                        mtime = None
                         try:
                             mtime = os.path.getmtime(long_full_path)
-                            if mtime > start_time:
-                                # Sometimes mtime can be in the future (and thus invalid).
-                                # Try to use the ctime if it is.
-                                mtime = os.path.getctime(long_full_path)
-                        except WindowsError:
-                            if self.print_flag:
-                                print('WindowsError', long_full_path)
+                        except WindowsError as e:
+                            if self.verbose:
+                                print(e)
                             self.error_count += 1
+                        if mtime and mtime > start_time:
+                            # Sometimes mtime can be in the future (and thus invalid).
+                            # Try to use the ctime if it is.
+                            try:
+                                mtime = os.path.getctime(long_full_path)
+                            except WindowsError as e:
+                                if self.verbose:
+                                    print(e)
+                                self.error_count += 1
+                        if mtime and mtime > start_time:
+                            # still in the future - ignore it
+                            mtime = None
 
-                        # adjust the mtime if it's off
-                        if self.file_mtime != FileMTime.do_nothing:
+                        if mtime:
+                            # determine if the mtime is different than what's encoded in the file name
                             file_name_mtime = get_mtime_from_file_name(long_full_path)
                             if file_name_mtime is not None:
-                                if abs(mtime - file_name_mtime.timestamp()) > timedelta(days=1).total_seconds():
+                                ts = file_name_mtime.timestamp()
+                                # use a fairly wide window to allow for passing through time zones
+                                window = 1  # days
+                                if abs(mtime - ts) > timedelta(days=window).total_seconds():
                                     print('mtime missmatch: %s (os:%s, filename:%s)' % (long_full_path,
-                                                                                        str(datetime.fromtimestamp(mtime)),
-                                                                                        str(file_name_mtime)))
-                                    if self.file_mtime is FileMTime.update_mtime:
-                                        print('updating mtime to %s' % file_name_mtime.strftime('%c'))
-                                        mtime = file_name_mtime.timestamp()
-                                        os.utime(long_full_path, (mtime, mtime))
+                                          str(datetime.fromtimestamp(mtime)), str(file_name_mtime)))
+                                    if self.do_update:
+                                        # adjust the mtime if it's off
+                                        if self.verbose:
+                                            print('updating mtime to %s' % file_name_mtime.strftime('%c'))
+                                        os.utime(long_full_path, (ts, ts))
+                                        mtime = ts
 
-                        # make sure it's still not in the future ... if it is, ignore it
-                        if mtime <= start_time:
-                            latest_time = max(mtime, latest_time)
+                            # make sure it's still not in the future ... if it is, ignore it
+                            if mtime and mtime <= start_time:
+                                latest_time = max(mtime, latest_time)
 
                 long_path = propmtime.util.get_long_abs_path(walk_path)
                 try:
-                    mtime = os.path.getmtime(long_path)
-                    # don't change it if it's close (there can be rounding errors, etc.)
-                    if abs(latest_time - mtime) > 2:
-                        os.utime(long_path, (latest_time, latest_time))
-                except WindowsError:
-                    if self.print_flag:
-                        print('WindowsError', long_path)
-                    self.error_count += 1
+                    try:
+                        mtime = os.path.getmtime(long_path)
+                        # don't change it if it's close (there can be rounding errors, etc.)
+                        if abs(latest_time - mtime) > 2:
+                            os.utime(long_path, (latest_time, latest_time))
+                    except WindowsError as e:
+                        if self.verbose:
+                            print(e)
+                        self.error_count += 1
+                except UnicodeEncodeError as e2:
+                    print(e2)
 
         self.total_time = time.time() - start_time
 

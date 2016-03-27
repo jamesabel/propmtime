@@ -17,8 +17,6 @@ distutils.core.setup(
     description="propagate mtime to parent folders/directories",
 
     # make a single executable
-    # PyQt version:
-    # options = {'py2exe': {'bundle_files': 1, 'compressed': True, "includes" : ["sip", "PyQt5.QtGui", "PyQt5.QtCore"]}},
     options={'py2exe': {'bundle_files': 1, 'compressed': True, }},
 
     zipfile = None,

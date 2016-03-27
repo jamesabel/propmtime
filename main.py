@@ -19,12 +19,8 @@ def main(parsed_args):
         elif a == 's':
             process_system = True
 
-    file_mtime = propmtime.FileMTime.do_nothing
-    if parsed_args.update:
-        file_mtime = propmtime.FileMTime.update_mtime
-    elif parsed_args.simulate:
-        file_mtime = propmtime.FileMTime.show_differences
-    pmt = propmtime.Propmtime(parsed_args.path, file_mtime, process_hidden, process_system, parsed_args.verbose)
+    pmt = propmtime.Propmtime(parsed_args.path, parsed_args.update, parsed_args.silent, process_hidden, process_system,
+                              parsed_args.verbose)
 
     if parsed_args.path is not None:
         if not os.path.isdir(util.get_long_abs_path(parsed_args.path)):
@@ -33,7 +29,8 @@ def main(parsed_args):
             exit()
     if parsed_args.verbose:
         print("path : %s" % parsed_args.path)
-        print("file mtime directive : %s" % str(file_mtime))
+        print("update : %s" % parsed_args.update)
+        print("silent : %s" % parsed_args.silent)
 
     pmt.run()
     if parsed_args.verbose:
@@ -61,10 +58,10 @@ propmtime -p documents -a s -v  # process system files as well as normal files, 
     parser = argparse.ArgumentParser(epilog=epi, description=desc, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-v', '--verbose', action='store_true', default=False)
     parser.add_argument('-u', '--update', action='store_true', default=False,
-                        help='update the file mtime to a value derived from the file name with the pattern described below')
-    parser.add_argument('-s', '--simulate', action='store_true', default=True,
-                        help='only simulate the file mtime change and write the intent to stdout')
-    parser.add_argument("-p", "--path", default=".", help="path to folder or directory")
+                        help='Update the file mtime to a value derived from the file name with the pattern described below.')
+    parser.add_argument('-s', '--silent', action='store_true', default=False,
+                        help='Do not print messages when file mtimes do not match file name format.  Use when you only want folder mtime updates (not files).')
+    parser.add_argument("-p", "--path", default=".", help="Path to folder or directory")
     parser.add_argument("-a", "--attrib", nargs="+", default=(''),
                         help="""ATTRIB can be h(idden) and/or s(ystem)to process hidden and/or system files.
 Default is to ignore hidden and system files."""

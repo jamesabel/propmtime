@@ -43,4 +43,6 @@ MANIFEST
 # generally ignore temp stuff
 temp.*
 temp/
+
 third_party_installers/
+repo_ignore/

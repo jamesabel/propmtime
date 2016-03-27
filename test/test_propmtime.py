@@ -6,12 +6,12 @@ import unittest
 import win32api
 import win32con
 import time
-from propmtime.propmtime import Propmtime, FileMTime
+from propmtime.propmtime import Propmtime
 import propmtime.build
 import propmtime.write_timestamp
 
 
-class FileCreator():
+class FileCreator:
     """
     file creator
     """
@@ -34,6 +34,9 @@ class FileCreator():
     def get_time(self):
         return self.mtime
 
+    def get_path(self):
+        return self.full_path
+
 
 class TestPropmtime(unittest.TestCase):
 
@@ -51,6 +54,7 @@ class TestPropmtime(unittest.TestCase):
         self.normal = FileCreator(self.current_time, self.child, 'normal.txt', 3)
         self.file_with_date_style_a = FileCreator(self.current_time, self.root, '2016_01_01_01_01_01.txt')
         self.file_with_date_style_b = FileCreator(self.current_time, self.root, 'some_string_1_1_16.txt')
+        self.file_with_date_style_c = FileCreator(self.current_time, self.root, 'Fri_Dec_28_21_22_21_2007.jpg')
 
         # todo: have this not require some arbitrary instance line 'normal'
         self.root_dir_init_offset = 4
@@ -58,39 +62,39 @@ class TestPropmtime(unittest.TestCase):
         os.utime(self.root, (folder_mtime, folder_mtime))
 
     def test_normal(self):
-        pmt = Propmtime(self.root, FileMTime.do_nothing, print_flag=True)
+        pmt = Propmtime(self.root, False, False, verbose=True)
         pmt.run()
-        self.compare_times(os.path.getmtime(self.child), self.normal.get_time())
+        self.compare_times(os.path.getmtime(self.child), self.normal.get_time(), self.normal.get_path())
 
     def test_normal_file_mtime_simulate(self):
-        pmt = Propmtime(self.root, FileMTime.show_differences, print_flag=True)
+        pmt = Propmtime(self.root, False, False, verbose=True)
         pmt.run()
 
     def test_normal_file_mtime_update(self):
-        pmt = Propmtime(self.root, FileMTime.update_mtime, print_flag=True)
+        pmt = Propmtime(self.root, True, False, verbose=True)
         pmt.run()
-        self.compare_times(os.path.getmtime(self.root), self.normal.get_time())
+        self.compare_times(os.path.getmtime(self.root), self.normal.get_time(), self.normal.get_path())
 
     def test_hidden(self):
-        pmt = Propmtime(self.root, FileMTime.do_nothing, process_hidden=True, print_flag=True)
+        pmt = Propmtime(self.root, False, False, process_hidden=True, verbose=True)
         pmt.run()
-        self.compare_times(os.path.getmtime(self.child), self.hidden.get_time())
+        self.compare_times(os.path.getmtime(self.child), self.hidden.get_time(), self.hidden.get_path())
 
     def test_system(self):
-        pmt = Propmtime(self.root, FileMTime.do_nothing, process_system=True, print_flag=True)
+        pmt = Propmtime(self.root, False, False, process_system=True, verbose=True)
         pmt.run()
-        self.compare_times(os.path.getmtime(self.child), self.system.get_time())
+        self.compare_times(os.path.getmtime(self.child), self.system.get_time(), self.system.get_path())
 
     def test_all(self):
-        pmt = Propmtime(self.root, FileMTime.do_nothing, process_hidden=True, process_system=True, print_flag=True)
+        pmt = Propmtime(self.root, False, False, process_hidden=True, process_system=True, verbose=True)
         pmt.run()
-        self.compare_times(os.path.getmtime(self.child), self.system.get_time())
+        self.compare_times(os.path.getmtime(self.child), self.system.get_time(), self.system.get_path())
 
-    def compare_times(self, t1, t2):
+    def compare_times(self, t1, t2, path):
         scale = 10  # get within this # of sec
         t1 /= scale
         t2 /= scale
-        self.assertAlmostEqual(t1, t2, places=1)
+        self.assertAlmostEqual(t1, t2, places=1, msg=path)
 
     def test_timestamp(self):
         ts = propmtime.build.timestamp
@@ -104,7 +108,7 @@ class TestPropmtime(unittest.TestCase):
             attrib = []
             path = '.'
             update = True
-            simulate = False
+            silent = False
         main(ParsedArgs())
 
 if __name__ == "__main__":
