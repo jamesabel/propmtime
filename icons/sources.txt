@@ -1,1 +1,4 @@
 http://www.free-icons-download.net/active-directory-icon-23831/
+
+convert .png to .ico:
+http://icoconvert.com/
