@@ -47,3 +47,9 @@ temp/
 third_party_installers/
 repo_ignore/
 venv/
+history/
+data/
+*.dmg
+dist/
+.cache/
+logs/

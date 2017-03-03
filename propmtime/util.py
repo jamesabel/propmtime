@@ -1,46 +1,56 @@
 
 import platform
 import os
-import win32api
-import win32con
-import pywintypes
+import logging
+import functools
 
-WINDOWS_SEP = "\\"
-LINUX_SEP = '/'
+import propmtime.logger
 
 
-def get_folder_sep():
-    if is_windows():
-        sep = WINDOWS_SEP
-    else:
-        sep = LINUX_SEP
-    return sep[-1]
-
-
-def get_file_attributes(in_path, verbose):
-    attrib = 0
-    attributes = set()
-    if is_windows():
-        try:
-            attrib = win32api.GetFileAttributes(in_path)
-        except pywintypes.error as e:
-            if verbose:
-                print(e, in_path)
-        if attrib & win32con.FILE_ATTRIBUTE_HIDDEN:
-            attributes.add(win32con.FILE_ATTRIBUTE_HIDDEN)
-        if attrib & win32con.FILE_ATTRIBUTE_SYSTEM:
-            attributes.add(win32con.FILE_ATTRIBUTE_SYSTEM)
-    # todo : Linux version of this
-    return attributes
-
-
+@functools.lru_cache()  # platform doesn't change
 def is_windows():
-    is_win = False
-    plat = platform.system()
-    plat = plat.lower()
-    if plat[0] == 'w':
-        is_win = True
-    return is_win
+    return platform.system().lower()[0] == 'w'
+
+
+@functools.lru_cache()  # platform doesn't change
+def is_linux():
+    return platform.system().lower()[0] == 'l'
+
+
+@functools.lru_cache()  # platform doesn't change
+def is_mac():
+    # darwin
+    return platform.system().lower()[0] == 'd'
+
+if is_windows():
+    import win32api
+    import win32con
+
+
+def get_file_attributes(in_path):
+    hidden = False
+    system = False
+    if is_windows():
+        attrib = win32api.GetFileAttributes(in_path)
+        if attrib & win32con.FILE_ATTRIBUTE_HIDDEN:
+            hidden = False
+        if attrib & win32con.FILE_ATTRIBUTE_SYSTEM:
+            system = False
+    elif is_mac() or is_linux():
+        if '/.' in in_path:
+            hidden = True
+        else:
+            basename = os.path.basename(in_path)
+            if len(basename) > 0:
+                if basename[0] == '.':
+                    hidden = True
+                # in Mac, there's a file named 'Icon\r' that we want to ignore
+                # see http://superuser.com/questions/298785/icon-file-on-os-x-desktop
+                if (basename == 'Icon\r') or (basename == 'Icon\n'):
+                    hidden = True
+    else:
+        raise NotImplementedError
+    return hidden, system
 
 
 def get_long_abs_path(in_path):
@@ -56,5 +66,10 @@ def get_long_abs_path(in_path):
     else:
         abs_path = os.path.abspath(in_path)
     if os.path.isdir(abs_path):
-        abs_path += get_folder_sep()
+        abs_path += os.sep
     return abs_path
+
+
+def set_verbose_logging():
+    propmtime.logger.set_file_log_level(logging.DEBUG)
+    propmtime.logger.set_console_log_level(logging.INFO)

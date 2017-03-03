@@ -1,0 +1,8 @@
+pyqt5
+sqlalchemy
+appdirs
+watchdog
+pypiwin32 ; sys_platform == 'win32'
+osnap
+py2app
+pytest
