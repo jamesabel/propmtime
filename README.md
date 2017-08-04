@@ -1,6 +1,9 @@
 # propmtime (propogate modification time) #
 Author: James Abel
 
+# Installers #
+[propmtime windows installer](https://s3.amazonaws.com/abel.co/propmtime/propmtime_installer.exe
+
 # Summary #
 `propmtime` appropriately sets the modification time (mtime) of folders/directories to make finding recently created or changed files easier.
 
