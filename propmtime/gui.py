@@ -37,6 +37,7 @@ class About(QDialog):
 
 class PropMTimeSystemTray(QSystemTrayIcon):
     def __init__(self, app, app_data_folder, parent=None):
+        self.scan_pmts = []
         pref = propmtime.preferences.Preferences(app_data_folder, True)
         if pref.get_verbose():
             propmtime.util.set_verbose_logging()
@@ -51,10 +52,13 @@ class PropMTimeSystemTray(QSystemTrayIcon):
 
         menu = QMenu(parent)
         menu.addAction("Paths").triggered.connect(self.paths)
+        menu.addAction("Scan").triggered.connect(self.scan)
         menu.addAction("Preferences").triggered.connect(self.preferences)
         menu.addAction("About").triggered.connect(self.about)
         menu.addAction("Exit").triggered.connect(self.exit)
         self.setContextMenu(menu)
+
+        propmtime.logger.log.info('starting initial scan')
 
         # when we initially run, do a propmtime on all paths in our configuration
         self._init_pmts = []
@@ -63,15 +67,45 @@ class PropMTimeSystemTray(QSystemTrayIcon):
             pmt.start()
             self._init_pmts.append(pmt)
 
+        propmtime.logger.log.info('initial scan complete')
+
         self._watcher = propmtime.watcher.Watcher(self._appdata_folder)
 
     def paths(self):
         preferences_dialog = propmtime.gui_paths.PathsDialog(self._appdata_folder)
         preferences_dialog.exec_()
 
+    def scan(self):
+        propmtime.logger.log.info('starting scan')
+        pref = propmtime.preferences.Preferences(self._appdata_folder)
+        for pmt in self.scan_pmts:
+            # if we're still scanning from a previous scan command, just return
+            if pmt.isAlive():
+                propmtime.logger.log.info('a scan is already running - not starting another')
+                return
+        self.scan_pmts = []
+        for path in pref.get_all_paths():
+            pmt = propmtime.PropMTime(path, True, pref.get_do_hidden(), pref.get_do_system())
+            pmt.start()
+            self.scan_pmts.append(pmt)
+        propmtime.logger.log.info('scan complete')
+
     def preferences(self):
         preferences_dialog = propmtime.gui_preferences.PreferencesDialog(self._appdata_folder)
         preferences_dialog.exec_()
+
+        for pmt in self._init_pmts:
+            pmt.request_exit()
+        for pmt in self._init_pmts:
+            pmt.join(propmtime.const.TIMEOUT)
+            if pmt.isAlive():
+                propmtime.logger.log.error('propmtime thread from init still alive')
+
+        self._init_pmts = []
+        for path in pref.get_all_paths():
+            pmt = propmtime.PropMTime(path, True, pref.get_do_hidden(), pref.get_do_system())
+            pmt.start()
+            self._init_pmts.append(pmt)
 
     def about(self):
         about_box = About()

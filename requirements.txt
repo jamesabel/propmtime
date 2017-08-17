@@ -3,6 +3,6 @@ sqlalchemy
 appdirs
 watchdog
 pypiwin32 ; sys_platform == 'win32'
-osnap
+# osnap
 py2app
 pytest
