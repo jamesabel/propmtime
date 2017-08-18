@@ -101,13 +101,6 @@ class PropMTimeSystemTray(QSystemTrayIcon):
             if pmt.isAlive():
                 propmtime.logger.log.error('propmtime thread from init still alive')
 
-        self._init_pmts = []
-        pref = propmtime.preferences.Preferences(self.appdata_folder, True)
-        for path in pref.get_all_paths():
-            pmt = propmtime.PropMTime(path, True, pref.get_do_hidden(), pref.get_do_system())
-            pmt.start()
-            self._init_pmts.append(pmt)
-
     def about(self):
         about_box = About()
         about_box.exec()
