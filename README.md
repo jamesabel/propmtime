@@ -2,7 +2,9 @@
 Author: James Abel
 
 # Installers #
+
 [propmtime windows installer](https://s3.amazonaws.com/abel.co/propmtime/propmtime_installer.exe)
+
 [propmtime MacOS/OSX installer](https://s3.amazonaws.com/abel.co/propmtime/propmtime_installer.pkg)
 
 # Summary #
