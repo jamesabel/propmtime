@@ -2,7 +2,8 @@ pyqt5
 sqlalchemy
 appdirs
 watchdog
+lxml ; sys_platform == 'win32'
 pypiwin32 ; sys_platform == 'win32'
 # osnap
-py2app
+py2app ; sys_platform == 'darwin'
 pytest
