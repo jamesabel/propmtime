@@ -22,8 +22,9 @@ class About(QDialog):
         self.setWindowTitle(propmtime.__application_name__)
         layout = QGridLayout(self)
         self.setLayout(layout)
-        self.add_line('Source:', propmtime.__url__, 1, layout)
-        self.add_line('Logs:', propmtime.logger.get_base_log_file_path(), 3, layout)
+        self.add_line('Version:', propmtime.__version__, 1, layout)
+        self.add_line('Source:', propmtime.__url__, 3, layout)
+        self.add_line('Logs:', propmtime.logger.get_base_log_file_path(), 5, layout)
         self.show()
 
     def add_line(self, label, value, row_number, layout):
