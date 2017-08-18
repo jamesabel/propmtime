@@ -12,7 +12,7 @@ if propmtime.util.is_windows():
 
 # PEP 440 compliant
 # adhere to http://semver.org/
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 # required for OSNAP
 __author__ = 'abel.co'
