@@ -1,0 +1,4 @@
+
+- create a test case where a path points to a directory that doesn't actually exist.
+  Right now, I think propmtime just exits (however there doesn't seem to be an
+  error message in the logs).
