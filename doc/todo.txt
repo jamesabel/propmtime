@@ -4,3 +4,6 @@
 - add a 'demo' that sets up a temp dir with subdirs and files that are not propagated, then
   show the user how it's better when the mtimes are propagated.
 
+- create a test case where a path points to a directory that doesn't actually exist.
+  Right now, I think propmtime just exits (however there doesn't seem to be an
+  error message in the logs).
