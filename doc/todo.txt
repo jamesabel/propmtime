@@ -1,0 +1,6 @@
+
+- add an option to only scan manually (don't propmtime in the background)
+
+- add a 'demo' that sets up a temp dir with subdirs and files that are not propagated, then
+  show the user how it's better when the mtimes are propagated.
+
