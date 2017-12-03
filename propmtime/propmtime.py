@@ -6,7 +6,7 @@ import time
 import pressenter2exit
 
 from propmtime import get_logger, init_logger, __application_name__, __author__, is_windows, is_mac, get_file_attributes
-from propmtime import get_long_abs_path, arguments
+from propmtime import get_long_abs_path, get_arguments
 
 if is_windows():
     import win32con
@@ -122,8 +122,7 @@ class PropMTime(threading.Thread):
             if walk_folder:
                 # For Mac we have to explicitly check to see if this path is hidden.
                 # For Windows this is taken care of with the hidden file attribute.
-                if (is_mac() and (self._process_hidden or '/.' not in walk_folder))\
-                        or not is_mac():
+                if (is_mac() and (self._process_hidden or '/.' not in walk_folder)) or not is_mac():
                     ffc, ec = _do_propagation(walk_folder, dirs + files, start_time, self._update, self._process_hidden, self._process_system)
                     files_folders_count += ffc
                     error_count += ec
@@ -145,12 +144,12 @@ class PropMTime(threading.Thread):
         self._request_exit_flag = True
 
 
-def main():
+def cli_main():
 
-    args = arguments()
+    args = get_arguments()
     init_propmtime_logger(args)
 
-    exit_control = pressenter2exit.PressEnter2Exit('%s : enter pressed - will now exit' % __application_name__)
+    exit_control = pressenter2exit.PressEnter2Exit('%s : enter pressed - will now exit' % __application_name__, None)
     pmt = PropMTime(args.path, not args.noupdate, args.hidden, args.system)
     pmt.start()
     while pmt.is_alive() and exit_control.is_alive():
@@ -161,4 +160,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    cli_main()

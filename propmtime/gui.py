@@ -5,7 +5,7 @@ import appdirs
 from PyQt5.QtGui import QFontMetrics, QFont, QIcon, QPixmap
 from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QSystemTrayIcon, QMenu, QDialog, QApplication
 
-from propmtime import get_logger, __application_name__, init_propmtime_logger, set_verbose, TIMEOUT, arguments
+from propmtime import get_logger, __application_name__, init_propmtime_logger, set_verbose, TIMEOUT, get_arguments
 import propmtime.preferences
 import propmtime.gui_preferences
 import propmtime.gui_paths
@@ -125,7 +125,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
 
 def main(app_data_folder):
 
-    log, handlers, log_file_path = init_propmtime_logger(arguments())
+    log, handlers, log_file_path = init_propmtime_logger(get_arguments())
 
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)  # so popup dialogs don't close the system tray icon

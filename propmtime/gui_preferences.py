@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QLabel, QDialogButtonBox, QGridLayout, QDialog, QChe
 from PyQt5.QtCore import Qt
 from PyQt5.Qt import QApplication
 
-from propmtime import __application_name__, __author__, get_logger, init_propmtime_logger, arguments
+from propmtime import __application_name__, __author__, get_logger, init_propmtime_logger, get_arguments
 import propmtime.preferences
 
 
@@ -72,7 +72,7 @@ class PreferencesDialog(QDialog):
 def main():
     import sys
 
-    init_propmtime_logger(arguments())
+    init_propmtime_logger(get_arguments())
 
     app = QApplication(sys.argv)
 
