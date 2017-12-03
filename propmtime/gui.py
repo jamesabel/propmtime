@@ -53,7 +53,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
 
         menu = QMenu(parent)
         menu.addAction("Paths").triggered.connect(self.paths)
-        menu.addAction("Scan").triggered.connect(self.scan)
+        menu.addAction("Scan All").triggered.connect(self.scan)
         menu.addAction("Preferences").triggered.connect(self.preferences)
         menu.addAction("About").triggered.connect(self.about)
         menu.addAction("Exit").triggered.connect(self.exit)
