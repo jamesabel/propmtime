@@ -1,16 +1,16 @@
 
 import sys
-import appdirs
 
-from PyQt5.QtGui import QFontMetrics, QFont, QIcon, QPixmap
+from PyQt5.QtGui import QFontMetrics, QFont
 from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QSystemTrayIcon, QMenu, QDialog, QApplication
 
-from propmtime import get_logger, __application_name__, init_propmtime_logger, set_verbose, TIMEOUT, get_arguments
+from propmtime import get_logger, __application_name__, init_propmtime_logger, set_verbose, get_arguments
 import propmtime.preferences
 import propmtime.gui_preferences
 import propmtime.gui_paths
 import propmtime.util
 import propmtime.watcher
+from propmtime import get_icon, Scan, init_blink, request_blink_exit
 
 log = get_logger(__application_name__)
 
@@ -38,7 +38,6 @@ class About(QDialog):
 
 class PropMTimeSystemTray(QSystemTrayIcon):
     def __init__(self, app, app_data_folder, log_file_path, parent=None):
-        self.scan_pmts = []
         pref = propmtime.preferences.Preferences(app_data_folder, True)
         set_verbose(pref.get_verbose())
         log.info('starting LatusSystemTrayIcon')
@@ -46,9 +45,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         self.app = app
         self.log_file_path = log_file_path
 
-        from propmtime import icons
-        icon = QIcon(QPixmap(':icon.png'))
-        super().__init__(icon, parent)
+        super().__init__(get_icon(False), parent)
         self._appdata_folder = app_data_folder
 
         menu = QMenu(parent)
@@ -59,63 +56,42 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         menu.addAction("Exit").triggered.connect(self.exit)
         self.setContextMenu(menu)
 
-        log.info('starting initial scan')
-
-        # when we initially run, do a propmtime on all paths in our configuration
-        self._init_pmts = []
-        for path in pref.get_all_paths():
-            pmt = propmtime.PropMTime(path, True, pref.get_do_hidden(), pref.get_do_system())
-            pmt.start()
-            self._init_pmts.append(pmt)
-
-        log.info('initial scan complete')
-
         if pref.get_background_monitor():
             self._watcher = propmtime.watcher.Watcher(self._appdata_folder)
         else:
             self._watcher = None
 
+        self.scanner = None
+
+        init_blink(self)
+
+        if pref.get_background_monitor():
+            self.scan()
+
+    def scan(self):
+        self.scanner = Scan(self._appdata_folder)
+        self.scanner.start()
+
     def paths(self):
         preferences_dialog = propmtime.gui_paths.PathsDialog(self._appdata_folder)
         preferences_dialog.exec_()
 
-    def scan(self):
-        log.info('starting scan')
-        pref = propmtime.preferences.Preferences(self._appdata_folder)
-        for pmt in self.scan_pmts:
-            # if we're still scanning from a previous scan command, just return
-            if pmt.isAlive():
-                log.info('a scan is already running - not starting another')
-                return
-        self.scan_pmts = []
-        for path in pref.get_all_paths():
-            pmt = propmtime.PropMTime(path, True, pref.get_do_hidden(), pref.get_do_system())
-            pmt.start()
-            self.scan_pmts.append(pmt)
-        log.info('scan complete')
+    def stop_scans(self):
+        if self.scanner:
+            self.scanner.request_exit()
 
     def preferences(self):
+        self.stop_scans()  # don't change things in the middle of a scan
         preferences_dialog = propmtime.gui_preferences.PreferencesDialog(self._appdata_folder)
         preferences_dialog.exec_()
-
-        for pmt in self._init_pmts:
-            pmt.request_exit()
-        for pmt in self._init_pmts:
-            pmt.join(TIMEOUT)
-            if pmt.isAlive():
-                log.error('propmtime thread from init still alive')
 
     def about(self):
         about_box = About(self.log_file_path)
         about_box.exec()
 
     def exit(self):
-        for pmt in self._init_pmts:
-            pmt.request_exit()
-        for pmt in self._init_pmts:
-            pmt.join(TIMEOUT)
-            if pmt.isAlive():
-                log.error('propmtime thread from init still alive')
+        request_blink_exit()
+        self.stop_scans()
         if self._watcher:
             self._watcher.request_exit()
         log.info('exit')

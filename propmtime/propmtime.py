@@ -7,6 +7,7 @@ import pressenter2exit
 
 from propmtime import get_logger, init_logger, __application_name__, __author__, is_windows, is_mac, get_file_attributes
 from propmtime import get_long_abs_path, get_arguments
+from propmtime import set_blinking
 
 if is_windows():
     import win32con
@@ -26,7 +27,7 @@ def _process_the_file(process_hidden, process_system, path):
     return (not (is_hidden or is_system)) or (is_hidden and process_hidden) or (is_system and process_system)
 
 
-def _do_propagation(containing_folder, fs_objs, current_time, update, process_hidden, process_system):
+def do_propagation(containing_folder, fs_objs, current_time, update, process_hidden, process_system):
     """
     propagate the mtime of one folder
     :param containing_folder: parent folder
@@ -34,6 +35,7 @@ def _do_propagation(containing_folder, fs_objs, current_time, update, process_hi
     :param current_time: current time in seconds from epoch
     :return: file_folders_count, error_count
     """
+    set_blinking(True)
     latest_time = 0  # empty folders get an mtime of the epoch
     files_folders_count = 0
     error_count = 0
@@ -45,7 +47,7 @@ def _do_propagation(containing_folder, fs_objs, current_time, update, process_hi
             try:
                 mtime = os.path.getmtime(long_full_path)
             except OSError as e:
-                log.warn(e)
+                log.info(e)  # quite possible to get an access error
                 error_count += 1
             if mtime and mtime > current_time:
                 # Sometimes mtime can be in the future (and thus invalid).
@@ -68,7 +70,7 @@ def _do_propagation(containing_folder, fs_objs, current_time, update, process_hi
         mtime = os.path.getmtime(long_path)
         # don't change it if it's close (there can be rounding errors, etc.)
         if abs(latest_time - mtime) > 2 and update:
-            log.info('updating %s to %s' % (long_path, mtime))
+            log.debug('updating %s to %s' % (long_path, mtime))
             os.utime(long_path, (latest_time, latest_time))
     except OSError as e:
         # these are things like access denied and we don't want to see that under normal operation
@@ -77,6 +79,7 @@ def _do_propagation(containing_folder, fs_objs, current_time, update, process_hi
     except UnicodeEncodeError as e:
         log.error(e)
         error_count += 1
+    set_blinking(False)
     return files_folders_count, error_count
 
 
@@ -89,9 +92,12 @@ def propmtime_event(root, event_file_path, update, process_hidden, process_syste
         while os.path.abspath(current_folder) != os.path.abspath(root):
             if len(current_folder) < len(root):
                 raise RuntimeError
-            fs_objs = os.listdir(current_folder)
-            _do_propagation(current_folder, fs_objs, current_time, update, process_hidden, process_system)
-            current_folder = os.path.dirname(current_folder)
+            try:
+                fs_objs = os.listdir(current_folder)
+                do_propagation(current_folder, fs_objs, current_time, update, process_hidden, process_system)
+                current_folder = os.path.dirname(current_folder)
+            except FileNotFoundError as e:
+                log.info(str(e))
     else:
         log.info('not processed : %s' % event_file_path)
 
@@ -123,7 +129,7 @@ class PropMTime(threading.Thread):
                 # For Mac we have to explicitly check to see if this path is hidden.
                 # For Windows this is taken care of with the hidden file attribute.
                 if (is_mac() and (self._process_hidden or '/.' not in walk_folder)) or not is_mac():
-                    ffc, ec = _do_propagation(walk_folder, dirs + files, start_time, self._update, self._process_hidden, self._process_system)
+                    ffc, ec = do_propagation(walk_folder, dirs + files, start_time, self._update, self._process_hidden, self._process_system)
                     files_folders_count += ffc
                     error_count += ec
                 else:

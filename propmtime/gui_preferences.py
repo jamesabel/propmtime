@@ -34,9 +34,9 @@ class PreferencesDialog(QDialog):
             col += 1
         row = 1
         self.selections = []
+        self.selections.append({'str': 'Monitor Folders in the Background (unchecked: manual only)', 'set': preferences.set_background_monitor, 'get': preferences.get_background_monitor})
         self.selections.append({'str': 'Process Hidden Files/Folders', 'set': preferences.set_do_hidden, 'get': preferences.get_do_hidden})
         self.selections.append({'str': 'Process System Files/Folders', 'set': preferences.set_do_system, 'get': preferences.get_do_system})
-        self.selections.append({'str': 'Monitor Folders in the Background (unchecked: manual only)', 'set': preferences.set_background_monitor, 'get': preferences.get_background_monitor})
         self.selections.append({'str': 'Verbose', 'set': preferences.set_verbose, 'get': preferences.get_verbose})
         for ss in self.selections:
             preferences_layout.addWidget(QLabel(ss['str']), row, 0)

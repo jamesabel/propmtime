@@ -10,6 +10,7 @@ import propmtime.preferences
 
 log = get_logger(__application_name__)
 
+
 class ModHandler(FileSystemEventHandler):
     def __init__(self, path, app_data_folder):
         super().__init__()

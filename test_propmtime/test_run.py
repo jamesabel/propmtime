@@ -16,7 +16,7 @@ def get_mtimes(root_folder, file_path):
     return root_mtime, file_mtime
 
 
-def run(is_hidden, is_system):
+def run(is_hidden, is_system, root=test_propmtime.data_root):
     current_time = time.time()
     file_name = 'myfile.txt'
     if propmtime.util.is_mac() and is_hidden:
@@ -49,3 +49,7 @@ def test_system():
 
 def test_both():
     run(True, True)
+
+
+def test_non_existent():
+    run(False, False, 'i_do_not_exist')
