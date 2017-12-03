@@ -4,10 +4,8 @@ import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-import propmtime
+from propmtime import TIMEOUT, propmtime_event
 import propmtime.preferences
-import propmtime.logger
-import propmtime.const
 
 
 class ModHandler(FileSystemEventHandler):
@@ -21,7 +19,7 @@ class ModHandler(FileSystemEventHandler):
         propmtime.logger.log.info('on_any_event : %s' % event)
         pref = propmtime.preferences.Preferences(self._app_data_folder)
         if not event.is_directory:
-            propmtime.event(self._pmt_path, event.src_path, True, pref.get_do_hidden(), pref.get_do_system())
+            propmtime_event(self._pmt_path, event.src_path, True, pref.get_do_hidden(), pref.get_do_system())
 
 
 class Watcher:
@@ -44,6 +42,6 @@ class Watcher:
     def request_exit(self):
         self._observer.unschedule_all()
         self._observer.stop()
-        self._observer.join(propmtime.const.TIMEOUT)
+        self._observer.join(TIMEOUT)
         if self._observer.isAlive():
             propmtime.logger.log.error('observer still alive')

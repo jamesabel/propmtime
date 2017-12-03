@@ -7,9 +7,9 @@ import sqlalchemy.orm
 import sqlalchemy.ext.declarative
 import sqlalchemy.exc
 
-import propmtime.const
-import propmtime.logger
+from propmtime import __application_name__, get_logger, DB_EXTENSION
 
+log = get_logger(__application_name__)
 
 """
 Reads/writes to the preferences DB.  All accesses to the DB are via this module.
@@ -18,7 +18,7 @@ Reads/writes to the preferences DB.  All accesses to the DB are via this module.
 
 Base = sqlalchemy.ext.declarative.declarative_base()
 
-PREFERENCES_FILE = 'preferences' + propmtime.const.DB_EXTENSION
+PREFERENCES_FILE = 'preferences' + DB_EXTENSION
 
 
 class KeyValueTable(Base):
@@ -43,6 +43,7 @@ class Preferences:
         self.__do_hidden_string = 'hidden'
         self.__do_system_string = 'system'
         self.__verbose_string = 'verbose'
+        self.__background_monitor_string = 'monitor'
 
         if not app_data_folder:
             raise RuntimeError
@@ -51,7 +52,7 @@ class Preferences:
         os.makedirs(self.app_data_folder, exist_ok=True)
         self.__db_path = os.path.abspath(os.path.join(self.app_data_folder, PREFERENCES_FILE))
         self._sqlite_path = 'sqlite:///' + self.__db_path
-        propmtime.logger.log.debug('preferences DB path : %s' % self._sqlite_path)
+        log.debug('preferences DB path : %s' % self._sqlite_path)
         self.__db_engine = sqlalchemy.create_engine(self._sqlite_path)  # , echo=True)
         if init:
             Base.metadata.create_all(self.__db_engine)
@@ -61,7 +62,7 @@ class Preferences:
         return self._sqlite_path
 
     def _kv_set(self, key, value):
-        propmtime.logger.log.debug('pref_set : %s to %s' % (str(key), str(value)))
+        log.debug('pref_set : %s to %s' % (str(key), str(value)))
         session = self.__Session()
         kv_table = KeyValueTable(key=key, value=value, datetime=datetime.datetime.utcnow())
         q = session.query(KeyValueTable).filter_by(key=key).first()
@@ -81,7 +82,7 @@ class Preferences:
         if row:
             value = row.value
         session.close()
-        propmtime.logger.log.debug('pref_get : %s = %s' % (str(key), str(value)))
+        log.debug('pref_get : %s = %s' % (str(key), str(value)))
         return value
 
     def set_do_hidden(self, value):
@@ -102,6 +103,12 @@ class Preferences:
     def get_verbose(self):
         return bool(self._kv_get(self.__verbose_string))
 
+    def set_background_monitor(self, value):
+        self._kv_set(self.__background_monitor_string, bool(value))
+
+    def get_background_monitor(self):
+        return bool(self._kv_get(self.__background_monitor_string))
+
     def add_path(self, path):
         session = self.__Session()
         session.add(PathsTable(path=path, datetime=datetime.datetime.utcnow()))
@@ -119,7 +126,7 @@ class Preferences:
         paths = [row.path for row in session.query(PathsTable)]
         session.close()
         for path in paths:
-            propmtime.logger.log.debug('get_all_paths : %s' % path)
+            log.debug('get_all_paths : %s' % path)
         return paths
 
     def get_app_data_folder(self):

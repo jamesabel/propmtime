@@ -1,19 +1,19 @@
 
-import logging
 import appdirs
 
 from PyQt5.QtWidgets import QLabel, QDialogButtonBox, QGridLayout, QDialog, QCheckBox
 from PyQt5.QtCore import Qt
 from PyQt5.Qt import QApplication
 
-import propmtime.logger
+from propmtime import __application_name__, __author__, get_logger, init_propmtime_logger, arguments
 import propmtime.preferences
-import propmtime.util
-import propmtime.const
+
 
 """
 Displays a dialog box with the basic preferences and allows preferences to be changed.
 """
+
+log = get_logger(__application_name__)
 
 
 class PreferencesDialog(QDialog):
@@ -36,6 +36,7 @@ class PreferencesDialog(QDialog):
         self.selections = []
         self.selections.append({'str': 'Process Hidden Files/Folders', 'set': preferences.set_do_hidden, 'get': preferences.get_do_hidden})
         self.selections.append({'str': 'Process System Files/Folders', 'set': preferences.set_do_system, 'get': preferences.get_do_system})
+        self.selections.append({'str': 'Monitor Folders in the Background (unchecked: manual only)', 'set': preferences.set_background_monitor, 'get': preferences.get_background_monitor})
         self.selections.append({'str': 'Verbose', 'set': preferences.set_verbose, 'get': preferences.get_verbose})
         for ss in self.selections:
             preferences_layout.addWidget(QLabel(ss['str']), row, 0)
@@ -71,15 +72,15 @@ class PreferencesDialog(QDialog):
 def main():
     import sys
 
-    propmtime.logger.init()
-    propmtime.logger.set_console_log_level(logging.INFO)
+    init_propmtime_logger(arguments())
 
     app = QApplication(sys.argv)
 
-    app_data_folder = appdirs.user_config_dir(propmtime.__application_name__, propmtime.__author__)
+    app_data_folder = appdirs.user_config_dir(__application_name__, __author__)
     preferences_dialog = PreferencesDialog(app_data_folder)
     preferences_dialog.show()
     preferences_dialog.exec_()
+
 
 if __name__ == '__main__':
     main()

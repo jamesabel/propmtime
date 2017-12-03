@@ -1,10 +1,11 @@
 
 import platform
 import os
-import logging
 import functools
 
-import propmtime.logger
+from propmtime import get_logger, __application_name__
+
+log = get_logger(__application_name__)
 
 
 @functools.lru_cache()  # platform doesn't change
@@ -22,6 +23,7 @@ def is_mac():
     # darwin
     return platform.system().lower()[0] == 'd'
 
+
 if is_windows():
     import win32api
     import win32con
@@ -31,7 +33,11 @@ def get_file_attributes(in_path):
     hidden = False
     system = False
     if is_windows():
-        attrib = win32api.GetFileAttributes(in_path)
+        attrib = 0
+        try:
+            attrib = win32api.GetFileAttributes(in_path)
+        except Exception as e:
+            log.info('%s : %s' % (in_path, str(e)))
         if attrib & win32con.FILE_ATTRIBUTE_HIDDEN:
             hidden = False
         if attrib & win32con.FILE_ATTRIBUTE_SYSTEM:
@@ -69,7 +75,3 @@ def get_long_abs_path(in_path):
         abs_path += os.sep
     return abs_path
 
-
-def set_verbose_logging():
-    propmtime.logger.set_file_log_level(logging.DEBUG)
-    propmtime.logger.set_console_log_level(logging.INFO)

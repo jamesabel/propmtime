@@ -1,30 +1,40 @@
 
 import os
 import sys
-import appdirs
 import logging
 import logging.handlers
 import subprocess
 import shutil
 
-import propmtime.util
-import propmtime.gui
+import appdirs
+
+from propmtime import __application_name__
 import propmtime.messagedialog
 
 
-LOGGER_NAME_BASE = 'propmtime'
-LOG_FILE_NAME = LOGGER_NAME_BASE + '.log'
-
-log = None  # code that uses this module uses this logger
-
-g_fh = None  # file handler
-g_ch = None  # console handler
-g_dh = None  # dialog handler
-g_hh = None  # HTTP (log server) handler
-g_appdata_folder = None
-g_base_log_file_path = None  # 'base' since the file rotator can create files based on this file name
-
 g_formatter = logging.Formatter('%(asctime)s - %(name)s - %(filename)s - %(lineno)s - %(funcName)s - %(levelname)s - %(message)s')
+
+
+def get_logger(name):
+    """
+    Special "get logger" where you can pass in __file__ and it extracts the module name, or a string that is
+    the application name.
+    :param name: name of the logger to get, optionally as a python file path
+    :return: a logger
+    """
+
+    # If name is a python file, or a path to a python file, extract the module name.  Otherwise just use name
+    # as is.
+    if os.sep in name:
+        name = name.split(os.sep)[-1]
+    if name.endswith('.py'):
+        name = name[:-3]
+    return logging.getLogger(name)
+
+
+log = get_logger(__application_name__)
+
+handlers = {}
 
 
 class DialogBoxHandlerAndExit(logging.Handler):
@@ -35,92 +45,68 @@ class DialogBoxHandlerAndExit(logging.Handler):
         subprocess.check_call(args)
 
 
-def init_from_args(args):
-    if args.appdatafolder:
-        set_appdata_folder(args.appdatafolder)
-    if args.test:
-        init(backup_count=0)
+def init_logger(name, author=None, log_directory=None, verbose=False, delete_existing_log_files=False,
+                max_bytes=100*1E6, backup_count=3):
+    """
+    Initialize the logger.  Call once from the application 'main'.
+    """
+
+    global handlers
+
+    root_log = logging.getLogger()  # we init the root logger so all child loggers inherit this functionality
+
+    if root_log.hasHandlers():
+        root_log.error('logger already initialized')
+        return root_log
+
+    if verbose:
+        root_log.setLevel(logging.DEBUG)
     else:
-        init()
-    if args.test:
-        # test is the more verbose mode
-        set_console_log_level(logging.WARN)
-        set_file_log_level(logging.DEBUG)
-    elif args.verbose:
-        set_console_log_level(logging.WARN)
-        set_file_log_level(logging.INFO)
+        root_log.setLevel(logging.INFO)
 
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(g_formatter)
+    if verbose:
+        console_handler.setLevel(logging.INFO)
+    else:
+        console_handler.setLevel(logging.WARNING)
+    root_log.addHandler(console_handler)
+    handlers['console'] = console_handler
 
-def init(log_folder=None, delete_existing_log_files=False, backup_count=3):
-    global g_fh, g_ch, g_dh, log, g_base_log_file_path, g_appdata_folder
-
-    if not log_folder:
-        log_folder = appdirs.user_log_dir(propmtime.__author__, propmtime.__application_name__)
-
-    logger_name = LOGGER_NAME_BASE
-    log = logging.getLogger(logger_name)
-    
-    log.setLevel(logging.DEBUG)
-
-    if delete_existing_log_files:
-        shutil.rmtree(log_folder, ignore_errors=True)
-    os.makedirs(log_folder, exist_ok=True)
     # create file handler
-    g_base_log_file_path = os.path.join(log_folder, LOG_FILE_NAME)
-    if backup_count > 0:
-        max_bytes = 100*1E6  # normal usage
+    if log_directory is None:
+        log_directory = appdirs.user_log_dir(name, author)
+    if delete_existing_log_files:
+        shutil.rmtree(log_directory, ignore_errors=True)
+    os.makedirs(log_directory, exist_ok=True)
+    fh_path = os.path.join(log_directory, '%s.log' % name)
+    file_handler = logging.handlers.RotatingFileHandler(fh_path, maxBytes=max_bytes, backupCount=backup_count)
+    file_handler.setFormatter(g_formatter)
+    if verbose:
+        file_handler.setLevel(logging.DEBUG)
     else:
-        max_bytes = 0  # no limit - used during testing
-    g_fh = logging.handlers.RotatingFileHandler(g_base_log_file_path, maxBytes=max_bytes, backupCount=backup_count)
-    g_fh.setFormatter(g_formatter)
-    # see fh.setLevel() below for final level - we set this so we can put the log file path in the log file itself
-    g_fh.setLevel(logging.INFO)
-    log.addHandler(g_fh)
-
-    # create console handler
-    g_ch = logging.StreamHandler()
-    g_ch.setFormatter(g_formatter)
-    # see ch.setLevel() below for final level - we set this so we can display the log file path on the screen for debug
-    g_ch.setLevel(logging.INFO)
-    log.addHandler(g_ch)
+        file_handler.setLevel(logging.INFO)
+    root_log.addHandler(file_handler)
+    handlers['file'] = file_handler
+    root_log.info('log file path : "%s" ("%s")' % (fh_path, os.path.abspath(fh_path)))
 
     # create dialog box handler
-    g_dh = DialogBoxHandlerAndExit()
-    g_dh.setLevel(logging.FATAL)  # only pop this up as we're on the way out
-    log.addHandler(g_dh)
+    dialog_handler = DialogBoxHandlerAndExit()
+    dialog_handler.setLevel(logging.FATAL)  # only pop this up as we're on the way out
+    root_log.addHandler(dialog_handler)
+    handlers['dialog'] = dialog_handler
 
-    log.info('log_folder : %s' % os.path.abspath(log_folder))
-
-    # real defaults
-    set_console_log_level(logging.ERROR)
-    # set the file log level last so we'll see the set of the console level in the log file
-    set_file_log_level(logging.WARN)
-
-    return log_folder
+    return root_log, handlers, fh_path
 
 
-def set_file_log_level(new_level):
-    if g_fh:
-        # log the new level twice so we will likely see one of them, regardless if it's going up or down
-        log.info('setting file logging to %s' % logging.getLevelName(new_level))
-        g_fh.setLevel(new_level)
-        log.info('setting file logging to %s' % logging.getLevelName(new_level))
-
-
-def set_console_log_level(new_level):
-    if g_ch:
-        # log the new level twice so we will likely see one of them, regardless if it's going up or down
-        log.info('setting console logging to %s' % logging.getLevelName(new_level))
-        g_ch.setLevel(new_level)
-        log.info('setting console logging to %s' % logging.getLevelName(new_level))
-
-
-def set_appdata_folder(appdata_folder):
-    global g_appdata_folder
-    g_appdata_folder = appdata_folder
-
-
-def get_base_log_file_path():
-    global g_base_log_file_path
-    return g_base_log_file_path
-
+def set_verbose(verbose=True):
+    if verbose:
+        log.setLevel(logging.INFO)
+        handlers['file'].setLevel(logging.DEBUG)
+        handlers['console'].setLevel(logging.INFO)
+        handlers['dialog'].setLevel(logging.WARNING)
+    else:
+        log.setLevel(logging.WARN)
+        handlers['file'].setLevel(logging.INFO)
+        handlers['console'].setLevel(logging.WARNING)
+        handlers['dialog'].setLevel(logging.ERROR)

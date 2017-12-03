@@ -5,26 +5,26 @@ import appdirs
 from PyQt5.QtGui import QFontMetrics, QFont, QIcon, QPixmap
 from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QSystemTrayIcon, QMenu, QDialog, QApplication
 
-import propmtime
-import propmtime.logger
+from propmtime import get_logger, __application_name__, init_propmtime_logger, set_verbose, TIMEOUT, arguments
 import propmtime.preferences
 import propmtime.gui_preferences
 import propmtime.gui_paths
 import propmtime.util
 import propmtime.watcher
-import propmtime.const
+
+log = get_logger(__application_name__)
 
 
 class About(QDialog):
 
-    def __init__(self):
+    def __init__(self, log_file_path):
         super().__init__()  # todo: fill in parameter?
-        self.setWindowTitle(propmtime.__application_name__)
+        self.setWindowTitle(__application_name__)
         layout = QGridLayout(self)
         self.setLayout(layout)
         self.add_line('Version:', propmtime.__version__, 1, layout)
         self.add_line('Source:', propmtime.__url__, 3, layout)
-        self.add_line('Logs:', propmtime.logger.get_base_log_file_path(), 5, layout)
+        self.add_line('Logs:', log_file_path, 5, layout)
         self.show()
 
     def add_line(self, label, value, row_number, layout):
@@ -37,14 +37,14 @@ class About(QDialog):
 
 
 class PropMTimeSystemTray(QSystemTrayIcon):
-    def __init__(self, app, app_data_folder, parent=None):
+    def __init__(self, app, app_data_folder, log_file_path, parent=None):
         self.scan_pmts = []
         pref = propmtime.preferences.Preferences(app_data_folder, True)
-        if pref.get_verbose():
-            propmtime.util.set_verbose_logging()
-        propmtime.logger.log.info('starting LatusSystemTrayIcon')
-        propmtime.logger.log.info('preferences path : %s' % pref.get_db_path())
+        set_verbose(pref.get_verbose())
+        log.info('starting LatusSystemTrayIcon')
+        log.info('preferences path : %s' % pref.get_db_path())
         self.app = app
+        self.log_file_path = log_file_path
 
         from propmtime import icons
         icon = QIcon(QPixmap(':icon.png'))
@@ -59,7 +59,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         menu.addAction("Exit").triggered.connect(self.exit)
         self.setContextMenu(menu)
 
-        propmtime.logger.log.info('starting initial scan')
+        log.info('starting initial scan')
 
         # when we initially run, do a propmtime on all paths in our configuration
         self._init_pmts = []
@@ -68,28 +68,31 @@ class PropMTimeSystemTray(QSystemTrayIcon):
             pmt.start()
             self._init_pmts.append(pmt)
 
-        propmtime.logger.log.info('initial scan complete')
+        log.info('initial scan complete')
 
-        self._watcher = propmtime.watcher.Watcher(self._appdata_folder)
+        if pref.get_background_monitor():
+            self._watcher = propmtime.watcher.Watcher(self._appdata_folder)
+        else:
+            self._watcher = None
 
     def paths(self):
         preferences_dialog = propmtime.gui_paths.PathsDialog(self._appdata_folder)
         preferences_dialog.exec_()
 
     def scan(self):
-        propmtime.logger.log.info('starting scan')
+        log.info('starting scan')
         pref = propmtime.preferences.Preferences(self._appdata_folder)
         for pmt in self.scan_pmts:
             # if we're still scanning from a previous scan command, just return
             if pmt.isAlive():
-                propmtime.logger.log.info('a scan is already running - not starting another')
+                log.info('a scan is already running - not starting another')
                 return
         self.scan_pmts = []
         for path in pref.get_all_paths():
             pmt = propmtime.PropMTime(path, True, pref.get_do_hidden(), pref.get_do_system())
             pmt.start()
             self.scan_pmts.append(pmt)
-        propmtime.logger.log.info('scan complete')
+        log.info('scan complete')
 
     def preferences(self):
         preferences_dialog = propmtime.gui_preferences.PreferencesDialog(self._appdata_folder)
@@ -98,32 +101,34 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         for pmt in self._init_pmts:
             pmt.request_exit()
         for pmt in self._init_pmts:
-            pmt.join(propmtime.const.TIMEOUT)
+            pmt.join(TIMEOUT)
             if pmt.isAlive():
-                propmtime.logger.log.error('propmtime thread from init still alive')
+                log.error('propmtime thread from init still alive')
 
     def about(self):
-        about_box = About()
+        about_box = About(self.log_file_path)
         about_box.exec()
 
     def exit(self):
         for pmt in self._init_pmts:
             pmt.request_exit()
         for pmt in self._init_pmts:
-            pmt.join(propmtime.const.TIMEOUT)
+            pmt.join(TIMEOUT)
             if pmt.isAlive():
-                propmtime.logger.log.error('propmtime thread from init still alive')
-        self._watcher.request_exit()
-        propmtime.logger.log.info('exit')
+                log.error('propmtime thread from init still alive')
+        if self._watcher:
+            self._watcher.request_exit()
+        log.info('exit')
         self.hide()
         QApplication.exit()  # todo: what should this parameter be?
 
 
 def main(app_data_folder):
-    propmtime.logger.init(appdirs.user_log_dir(appname=propmtime.__application_name__, appauthor=propmtime.__author__))
+
+    log, handlers, log_file_path = init_propmtime_logger(arguments())
 
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)  # so popup dialogs don't close the system tray icon
-    system_tray = PropMTimeSystemTray(app, app_data_folder)
+    system_tray = PropMTimeSystemTray(app, app_data_folder, log_file_path)
     system_tray.show()
     app.exec_()

@@ -1,19 +1,19 @@
 
-import logging
 import appdirs
 import os
 
 from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QGridLayout, QDialog, QPushButton, QVBoxLayout, QGroupBox, QFileDialog, QLabel
 from PyQt5.Qt import QApplication, QFontMetrics, QFont
 
-import propmtime.logger
+from propmtime import get_logger, __application_name__, init_propmtime_logger
 import propmtime.preferences
-import propmtime.util
-import propmtime.const
+
 
 """
 Displays a dialog box with the monitor paths.  Allows monitor paths to be added and/or deleted.
 """
+
+log = get_logger(__application_name__)
 
 
 class QRemovePushButton(QPushButton):
@@ -34,14 +34,14 @@ class QRemovePushButton(QPushButton):
 
 class PathsDialog(QDialog):
     def __init__(self, app_data_folder):
-        propmtime.logger.log.info('starting PathsDialog')
+        log.info('starting PathsDialog')
         self._app_data_folder = app_data_folder
         self._paths_row = 0
         self._adds = set()  # paths to add to the preferences DB
         self._removes = set()  # paths to remove from the preferences DB
         super().__init__()
 
-        propmtime.logger.log.info('preferences folder : %s' % self._app_data_folder)
+        log.info('preferences folder : %s' % self._app_data_folder)
         preferences = propmtime.preferences.Preferences(self._app_data_folder, True)
 
         self.setWindowTitle('Monitor Paths')
@@ -109,11 +109,11 @@ class PathsDialog(QDialog):
     def ok(self):
         pref = propmtime.preferences.Preferences(self._app_data_folder)
         for add in self._adds:
-            propmtime.logger.log.info('adding : %s' % add)
+            log.info('adding : %s' % add)
             if add not in pref.get_all_paths():
                 pref.add_path(add)
         for remove in self._removes:
-            propmtime.logger.log.info('removing : %s' % remove)
+            log.info('removing : %s' % remove)
             pref.remove_path(remove)
         self.close()
 
@@ -124,8 +124,7 @@ class PathsDialog(QDialog):
 def main():
     import sys
 
-    propmtime.logger.init()
-    propmtime.logger.set_console_log_level(logging.INFO)
+    init_propmtime_logger()
 
     app = QApplication(sys.argv)
 
@@ -133,6 +132,7 @@ def main():
     preferences_dialog = PathsDialog(app_data_folder)
     preferences_dialog.show()
     preferences_dialog.exec_()
+
 
 if __name__ == '__main__':
     main()
