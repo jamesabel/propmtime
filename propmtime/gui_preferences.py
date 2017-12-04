@@ -67,20 +67,3 @@ class PreferencesDialog(QDialog):
 
     def cancel(self):
         self.close()
-
-
-def main():
-    import sys
-
-    init_propmtime_logger(get_arguments())
-
-    app = QApplication(sys.argv)
-
-    app_data_folder = appdirs.user_config_dir(__application_name__, __author__)
-    preferences_dialog = PreferencesDialog(app_data_folder)
-    preferences_dialog.show()
-    preferences_dialog.exec_()
-
-
-if __name__ == '__main__':
-    main()

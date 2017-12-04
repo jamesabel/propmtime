@@ -5,8 +5,8 @@ import os
 from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QGridLayout, QDialog, QPushButton, QVBoxLayout, QGroupBox, QFileDialog, QLabel
 from PyQt5.Qt import QApplication, QFontMetrics, QFont
 
-from propmtime import get_logger, __application_name__, init_propmtime_logger
-import propmtime.preferences
+from propmtime import get_logger, __application_name__, __author__, init_propmtime_logger, PropMTime, TIMEOUT
+from propmtime import Preferences, get_arguments
 
 
 """
@@ -17,12 +17,13 @@ log = get_logger(__application_name__)
 
 
 class QRemovePushButton(QPushButton):
-    def __init__(self, path, label, removes, adds):
+    def __init__(self, path, label, scan, removes, adds):
         super().__init__('Remove')
         self._path = path
         self._removes = removes
         self._adds = adds
         self._label = label
+        self._scan = scan
 
     def remove(self):
         if self._path in self._adds:
@@ -30,6 +31,24 @@ class QRemovePushButton(QPushButton):
         self._removes.add(self._path)
         self.deleteLater()  # remove row associated with this path from dialog box
         self._label.deleteLater()
+        self._scan.remove()
+
+
+class QScanPushButton(QPushButton):
+    def __init__(self, path, label, app_data_folder):
+        super().__init__('Scan')
+        self._path = path
+        self._label = label
+        self._app_data_folder = app_data_folder
+
+    def scan(self):
+        pref = Preferences(self._app_data_folder)
+        pmt = PropMTime(self._path, True, pref.get_do_hidden(), pref.get_do_system())
+        pmt.start()
+        pmt.join(TIMEOUT)
+
+    def remove(self):
+        self.deleteLater()  # remove row associated with this path from dialog box
 
 
 class PathsDialog(QDialog):
@@ -42,7 +61,7 @@ class PathsDialog(QDialog):
         super().__init__()
 
         log.info('preferences folder : %s' % self._app_data_folder)
-        preferences = propmtime.preferences.Preferences(self._app_data_folder, True)
+        preferences = Preferences(self._app_data_folder, True)
 
         self.setWindowTitle('Monitor Paths')
         dialog_layout = QVBoxLayout()
@@ -100,14 +119,24 @@ class PathsDialog(QDialog):
         path_line.setReadOnly(True)
         width = QFontMetrics(QFont()).width(path) * 1.05
         path_line.setMinimumWidth(width)
-        self._paths_layout.addWidget(path_line, self._paths_row, 0)
-        button = QRemovePushButton(path, path_line, self._removes, self._adds)
-        button.clicked.connect(button.remove)
-        self._paths_layout.addWidget(button, self._paths_row, 1)
+
+        # scan button
+        scan_button = QScanPushButton(path, path_line, self._app_data_folder)
+        scan_button.clicked.connect(scan_button.scan)
+        self._paths_layout.addWidget(scan_button, self._paths_row, 0)
+
+        # path line
+        self._paths_layout.addWidget(path_line, self._paths_row, 1)
+
+        # remove button
+        remove_button = QRemovePushButton(path, path_line, scan_button, self._removes, self._adds)
+        remove_button.clicked.connect(remove_button.remove)
+        self._paths_layout.addWidget(remove_button, self._paths_row, 2)
+
         self._paths_row += 1
 
     def ok(self):
-        pref = propmtime.preferences.Preferences(self._app_data_folder)
+        pref = Preferences(self._app_data_folder)
         for add in self._adds:
             log.info('adding : %s' % add)
             if add not in pref.get_all_paths():
@@ -119,20 +148,3 @@ class PathsDialog(QDialog):
 
     def cancel(self):
         self.close()
-
-
-def main():
-    import sys
-
-    init_propmtime_logger()
-
-    app = QApplication(sys.argv)
-
-    app_data_folder = appdirs.user_config_dir(propmtime.__application_name__, propmtime.__author__)
-    preferences_dialog = PathsDialog(app_data_folder)
-    preferences_dialog.show()
-    preferences_dialog.exec_()
-
-
-if __name__ == '__main__':
-    main()
