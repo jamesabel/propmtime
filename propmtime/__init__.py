@@ -1,6 +1,6 @@
 # PEP 440 compliant
 # adhere to http://semver.org/
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 # required for OSNAP
 __author__ = 'abel'
@@ -21,3 +21,5 @@ from .propmtime import PropMTime, init_propmtime_logger, propmtime_event, cli_ma
 from .preferences import Preferences
 from .propmtime import PropMTime
 from .scan import Scan
+from .gui_paths import PathsDialog
+from .gui_scan import ScanDialog

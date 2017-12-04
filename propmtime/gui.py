@@ -10,7 +10,7 @@ import propmtime.gui_preferences
 import propmtime.gui_paths
 import propmtime.util
 import propmtime.watcher
-from propmtime import get_icon, Scan, init_blink, request_blink_exit
+from propmtime import get_icon, Scan, init_blink, request_blink_exit, PathsDialog, ScanDialog
 
 log = get_logger(__application_name__)
 
@@ -49,8 +49,9 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         self._appdata_folder = app_data_folder
 
         menu = QMenu(parent)
-        menu.addAction("Paths").triggered.connect(self.paths)
-        menu.addAction("Scan All").triggered.connect(self.scan)
+        menu.addAction("Scan").triggered.connect(self.scan)
+        menu.addAction("Scan All").triggered.connect(self.scan_all)
+        menu.addAction("Set Paths").triggered.connect(self.set_paths)
         menu.addAction("Preferences").triggered.connect(self.preferences)
         menu.addAction("About").triggered.connect(self.about)
         menu.addAction("Exit").triggered.connect(self.exit)
@@ -68,13 +69,17 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         if pref.get_background_monitor():
             self.scan()
 
-    def scan(self):
+    def scan_all(self):
         self.scanner = Scan(self._appdata_folder)
         self.scanner.start()
 
-    def paths(self):
-        preferences_dialog = propmtime.gui_paths.PathsDialog(self._appdata_folder)
-        preferences_dialog.exec_()
+    def scan(self):
+        scan_dialog = ScanDialog(self._appdata_folder)
+        scan_dialog.exec_()
+
+    def set_paths(self):
+        paths_dialog = PathsDialog(self._appdata_folder)
+        paths_dialog.exec_()
 
     def stop_scans(self):
         if self.scanner:

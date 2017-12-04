@@ -6,6 +6,7 @@ from propmtime import get_logger, __application_name__, Preferences, PropMTime, 
 log = get_logger(__application_name__)
 
 
+# todo: this can probably be refactored out in favor of other classes, or merge them into this class
 class Scan(threading.Thread):
 
     def __init__(self, appdata_folder):

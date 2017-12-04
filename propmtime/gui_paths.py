@@ -17,13 +17,12 @@ log = get_logger(__application_name__)
 
 
 class QRemovePushButton(QPushButton):
-    def __init__(self, path, label, scan, removes, adds):
+    def __init__(self, path, label, removes, adds):
         super().__init__('Remove')
         self._path = path
         self._removes = removes
         self._adds = adds
         self._label = label
-        self._scan = scan
 
     def remove(self):
         if self._path in self._adds:
@@ -31,24 +30,6 @@ class QRemovePushButton(QPushButton):
         self._removes.add(self._path)
         self.deleteLater()  # remove row associated with this path from dialog box
         self._label.deleteLater()
-        self._scan.remove()
-
-
-class QScanPushButton(QPushButton):
-    def __init__(self, path, label, app_data_folder):
-        super().__init__('Scan')
-        self._path = path
-        self._label = label
-        self._app_data_folder = app_data_folder
-
-    def scan(self):
-        pref = Preferences(self._app_data_folder)
-        pmt = PropMTime(self._path, True, pref.get_do_hidden(), pref.get_do_system())
-        pmt.start()
-        pmt.join(TIMEOUT)
-
-    def remove(self):
-        self.deleteLater()  # remove row associated with this path from dialog box
 
 
 class PathsDialog(QDialog):
@@ -72,7 +53,7 @@ class PathsDialog(QDialog):
         instructions_layout = QGridLayout()
         # unfortunately, currently if I watchdog monitor ~/Documents the initial watchdog schedule takes a really long time
         instructions_layout.addWidget(QLabel('Only add directories with a reasonable size and that do'))
-        instructions_layout.addWidget(QLabel('not have links to big directories (watchdog follows links).'))
+        instructions_layout.addWidget(QLabel('not have links to big directories (%s follows links).' % __application_name__))
         instructions_box.setLayout(instructions_layout)
         dialog_layout.addWidget(instructions_box)
 
@@ -120,18 +101,13 @@ class PathsDialog(QDialog):
         width = QFontMetrics(QFont()).width(path) * 1.05
         path_line.setMinimumWidth(width)
 
-        # scan button
-        scan_button = QScanPushButton(path, path_line, self._app_data_folder)
-        scan_button.clicked.connect(scan_button.scan)
-        self._paths_layout.addWidget(scan_button, self._paths_row, 0)
-
         # path line
-        self._paths_layout.addWidget(path_line, self._paths_row, 1)
+        self._paths_layout.addWidget(path_line, self._paths_row, 0)
 
         # remove button
-        remove_button = QRemovePushButton(path, path_line, scan_button, self._removes, self._adds)
+        remove_button = QRemovePushButton(path, path_line, self._removes, self._adds)
         remove_button.clicked.connect(remove_button.remove)
-        self._paths_layout.addWidget(remove_button, self._paths_row, 2)
+        self._paths_layout.addWidget(remove_button, self._paths_row, 1)
 
         self._paths_row += 1
 
