@@ -1,12 +1,8 @@
-
-import appdirs
-
 from PyQt5.QtWidgets import QLabel, QDialogButtonBox, QGridLayout, QDialog, QCheckBox
 from PyQt5.QtCore import Qt
-from PyQt5.Qt import QApplication
 
-from propmtime import __application_name__, __author__, get_logger, init_propmtime_logger, get_arguments
-import propmtime.preferences
+from propmtime import __application_name__, get_logger, PropMTimePreferences
+import propmtime.gui.preferences
 
 
 """
@@ -18,13 +14,11 @@ log = get_logger(__application_name__)
 
 class PreferencesDialog(QDialog):
     def __init__(self, app_data_folder):
-        propmtime.logger.log.info('starting PreferencesDialog')
-        propmtime.logger.log.info('preferences folder : %s' % app_data_folder)
+        propmtime.logger.log.debug('preferences folder : %s' % app_data_folder)
 
-        preferences = propmtime.preferences.Preferences(app_data_folder, True)
+        pref = PropMTimePreferences(app_data_folder)
 
         super().__init__()
-        row = 1
 
         preferences_layout = QGridLayout()
         headers = ['Option', 'Enabled']
@@ -34,10 +28,9 @@ class PreferencesDialog(QDialog):
             col += 1
         row = 1
         self.selections = []
-        self.selections.append({'str': 'Monitor Folders in the Background (unchecked: manual only)', 'set': preferences.set_background_monitor, 'get': preferences.get_background_monitor})
-        self.selections.append({'str': 'Process Hidden Files/Folders', 'set': preferences.set_do_hidden, 'get': preferences.get_do_hidden})
-        self.selections.append({'str': 'Process System Files/Folders', 'set': preferences.set_do_system, 'get': preferences.get_do_system})
-        self.selections.append({'str': 'Verbose', 'set': preferences.set_verbose, 'get': preferences.get_verbose})
+        self.selections.append({'str': 'Process Hidden Files/Folders', 'set': pref.set_do_hidden, 'get': pref.get_do_hidden})
+        self.selections.append({'str': 'Process System Files/Folders', 'set': pref.set_do_system, 'get': pref.get_do_system})
+        self.selections.append({'str': 'Verbose', 'set': pref.set_verbose, 'get': pref.get_verbose})
         for ss in self.selections:
             preferences_layout.addWidget(QLabel(ss['str']), row, 0)
             ss['cb'] = QCheckBox()

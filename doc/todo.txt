@@ -1,7 +1,10 @@
 
+- Add MSVCR100.dll to propmtime installer.
+
 - add a manual scan button for each path.
 
 - add a 'demo' that sets up a temp dir with subdirs and files that are not propagated, then
   show the user how it's better when the mtimes are propagated.
 
 - create a test case where a path points to a directory that doesn't actually exist.
+

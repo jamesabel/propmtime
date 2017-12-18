@@ -1,12 +1,10 @@
 
-import appdirs
 import os
 
 from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QGridLayout, QDialog, QPushButton, QVBoxLayout, QGroupBox, QFileDialog, QLabel
-from PyQt5.Qt import QApplication, QFontMetrics, QFont
+from PyQt5.Qt import QFontMetrics, QFont, QCheckBox
 
-from propmtime import get_logger, __application_name__, __author__, init_propmtime_logger, PropMTime, TIMEOUT
-from propmtime import Preferences, get_arguments
+from propmtime import get_logger, __application_name__, PropMTimePreferences
 
 
 """
@@ -17,19 +15,23 @@ log = get_logger(__application_name__)
 
 
 class QRemovePushButton(QPushButton):
-    def __init__(self, path, label, removes, adds):
+    def __init__(self, path, path_line, watch_label, watch_check, removes, adds):
         super().__init__('Remove')
         self._path = path
         self._removes = removes
         self._adds = adds
-        self._label = label
+        self._path_line = path_line
+        self._watch_label = watch_label
+        self._watch_check = watch_check
 
     def remove(self):
         if self._path in self._adds:
             self._adds.remove(self._path)
         self._removes.add(self._path)
         self.deleteLater()  # remove row associated with this path from dialog box
-        self._label.deleteLater()
+        self._path_line.deleteLater()
+        self._watch_label.deleteLater()
+        self._watch_check.deleteLater()
 
 
 class PathsDialog(QDialog):
@@ -42,7 +44,7 @@ class PathsDialog(QDialog):
         super().__init__()
 
         log.info('preferences folder : %s' % self._app_data_folder)
-        preferences = Preferences(self._app_data_folder, True)
+        pref = PropMTimePreferences(self._app_data_folder)
 
         self.setWindowTitle('Monitor Paths')
         dialog_layout = QVBoxLayout()
@@ -51,7 +53,6 @@ class PathsDialog(QDialog):
         # instructions
         instructions_box = QGroupBox()
         instructions_layout = QGridLayout()
-        # unfortunately, currently if I watchdog monitor ~/Documents the initial watchdog schedule takes a really long time
         instructions_layout.addWidget(QLabel('Only add directories with a reasonable size and that do'))
         instructions_layout.addWidget(QLabel('not have links to big directories (%s follows links).' % __application_name__))
         instructions_box.setLayout(instructions_layout)
@@ -62,7 +63,7 @@ class PathsDialog(QDialog):
         paths_box.setWindowTitle('Paths')
         self._paths_layout = QGridLayout()
         paths_box.setLayout(self._paths_layout)
-        for path in preferences.get_all_paths():
+        for path in pref.get_all_paths():
             self.add_path_row(path)
         dialog_layout.addWidget(paths_box)
 
@@ -96,23 +97,29 @@ class PathsDialog(QDialog):
             self.add_path_row(new_folder)
 
     def add_path_row(self, path):
+
+        # path
         path_line = QLineEdit(path)
         path_line.setReadOnly(True)
         width = QFontMetrics(QFont()).width(path) * 1.05
         path_line.setMinimumWidth(width)
-
-        # path line
         self._paths_layout.addWidget(path_line, self._paths_row, 0)
 
+        # watch label and checkbox
+        watcher_label = QLabel('watch:')
+        self._paths_layout.addWidget(watcher_label, self._paths_row, 1)
+        watcher_check_box = QCheckBox()
+        self._paths_layout.addWidget(watcher_check_box, self._paths_row, 2)
+
         # remove button
-        remove_button = QRemovePushButton(path, path_line, self._removes, self._adds)
+        remove_button = QRemovePushButton(path, path_line, watcher_label, watcher_check_box, self._removes, self._adds)
         remove_button.clicked.connect(remove_button.remove)
-        self._paths_layout.addWidget(remove_button, self._paths_row, 1)
+        self._paths_layout.addWidget(remove_button, self._paths_row, 3)
 
         self._paths_row += 1
 
     def ok(self):
-        pref = Preferences(self._app_data_folder)
+        pref = PropMTimePreferences(self._app_data_folder)
         for add in self._adds:
             log.info('adding : %s' % add)
             if add not in pref.get_all_paths():

@@ -8,8 +8,8 @@ import shutil
 
 import appdirs
 
-from propmtime import __application_name__
-import propmtime.messagedialog
+from propmtime import __application_name__, __author__
+import propmtime.gui.messagedialog
 
 
 g_formatter = logging.Formatter('%(asctime)s - %(name)s - %(filename)s - %(lineno)s - %(funcName)s - %(levelname)s - %(message)s')
@@ -40,8 +40,7 @@ handlers = {}
 class DialogBoxHandlerAndExit(logging.Handler):
     def emit(self, record):
         msg = self.format(record)
-        args = [sys.executable, '-c', propmtime.messagedialog.program, msg]
-        print(str(args))
+        args = [sys.executable, '-c', propmtime.gui.messagedialog.program, msg]
         subprocess.check_call(args)
 
 
@@ -101,12 +100,16 @@ def init_logger(name, author=None, log_directory=None, verbose=False, delete_exi
 
 def set_verbose(verbose=True):
     if verbose:
-        log.setLevel(logging.INFO)
+        log.setLevel(logging.DEBUG)
         handlers['file'].setLevel(logging.DEBUG)
         handlers['console'].setLevel(logging.INFO)
         handlers['dialog'].setLevel(logging.WARNING)
     else:
-        log.setLevel(logging.WARN)
+        log.setLevel(logging.INFO)
         handlers['file'].setLevel(logging.INFO)
         handlers['console'].setLevel(logging.WARNING)
         handlers['dialog'].setLevel(logging.ERROR)
+
+
+def init_logger_from_args(args):
+    return init_logger(__application_name__, __author__, args.logdir, args.verbose, args.dellog)

@@ -1,6 +1,5 @@
 
 import threading
-import time
 
 from propmtime import is_windows, get_icon, get_logger, __application_name__, TIMEOUT
 
@@ -24,6 +23,7 @@ def set_blinking(value):
 
 def init_blink(sys_tray):
     global _blink
+    log.debug('init_blink')
     if _blink is None:
         _blink = _Blink(sys_tray)
         _blink.start()

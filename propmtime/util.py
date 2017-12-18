@@ -74,4 +74,3 @@ def get_long_abs_path(in_path):
     if os.path.isdir(abs_path):
         abs_path += os.sep
     return abs_path
-

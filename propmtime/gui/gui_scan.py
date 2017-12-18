@@ -1,12 +1,8 @@
 
-import appdirs
-import os
+from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QGridLayout, QDialog, QPushButton, QVBoxLayout, QGroupBox
+from PyQt5.Qt import QFontMetrics, QFont
 
-from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QGridLayout, QDialog, QPushButton, QVBoxLayout, QGroupBox, QFileDialog, QLabel
-from PyQt5.Qt import QApplication, QFontMetrics, QFont
-
-from propmtime import get_logger, __application_name__, __author__, init_propmtime_logger, PropMTime, TIMEOUT
-from propmtime import Preferences, get_arguments
+from propmtime import get_logger, __application_name__, PropMTime, TIMEOUT, PropMTimePreferences
 
 
 """
@@ -24,7 +20,7 @@ class QScanPushButton(QPushButton):
         self._app_data_folder = app_data_folder
 
     def scan(self):
-        pref = Preferences(self._app_data_folder)
+        pref = PropMTimePreferences(self._app_data_folder)
         pmt = PropMTime(self._path, True, pref.get_do_hidden(), pref.get_do_system())
         pmt.start()
         pmt.join(TIMEOUT)
@@ -32,13 +28,13 @@ class QScanPushButton(QPushButton):
 
 class ScanDialog(QDialog):
     def __init__(self, app_data_folder):
-        log.info('starting PathsDialog')
+        log.debug('starting PathsDialog')
         self._app_data_folder = app_data_folder
         self._paths_row = 0
         super().__init__()
 
-        log.info('preferences folder : %s' % self._app_data_folder)
-        preferences = Preferences(self._app_data_folder, True)
+        log.debug('preferences folder : %s' % self._app_data_folder)
+        pref = PropMTimePreferences(self._app_data_folder)
 
         self.setWindowTitle('Scan a Path')
         dialog_layout = QVBoxLayout()
@@ -49,7 +45,7 @@ class ScanDialog(QDialog):
         paths_box.setWindowTitle('Paths')
         self._paths_layout = QGridLayout()
         paths_box.setLayout(self._paths_layout)
-        for path in preferences.get_all_paths():
+        for path in pref.get_all_paths():
             self.add_path_row(path)
         dialog_layout.addWidget(paths_box)
 
