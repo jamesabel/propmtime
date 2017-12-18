@@ -2,7 +2,8 @@
 from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QGridLayout, QDialog, QPushButton, QVBoxLayout, QGroupBox
 from PyQt5.Qt import QFontMetrics, QFont
 
-from propmtime import get_logger, __application_name__, PropMTime, TIMEOUT, PropMTimePreferences
+from propmtime import get_logger, __application_name__, PropMTime, PropMTimePreferences, request_exit_via_event
+from propmtime import init_exit_control_event
 
 
 """
@@ -13,23 +14,26 @@ log = get_logger(__application_name__)
 
 
 class QScanPushButton(QPushButton):
-    def __init__(self, path, label, app_data_folder):
+    def __init__(self, path, label, app_data_folder, system_tray):
         super().__init__('Scan')
         self._path = path
         self._label = label
         self._app_data_folder = app_data_folder
+        self._system_tray = system_tray
 
     def scan(self):
+        log.info(f'manual scan of {self._path}')
         pref = PropMTimePreferences(self._app_data_folder)
-        pmt = PropMTime(self._path, True, pref.get_do_hidden(), pref.get_do_system())
-        pmt.start()
-        pmt.join(TIMEOUT)
+        # use the system tray class to do the actual scan since it keeps track of the running scans
+        self._system_tray.stop_scan()
+        self._system_tray.scan_one(self._path, pref.get_do_hidden(), pref.get_do_system())
 
 
 class ScanDialog(QDialog):
-    def __init__(self, app_data_folder):
+    def __init__(self, app_data_folder, system_tray):
         log.debug('starting PathsDialog')
         self._app_data_folder = app_data_folder
+        self._system_tray = system_tray
         self._paths_row = 0
         super().__init__()
 
@@ -69,7 +73,7 @@ class ScanDialog(QDialog):
         self._paths_layout.addWidget(path_line, self._paths_row, 0)
 
         # scan button
-        scan_button = QScanPushButton(path, path_line, self._app_data_folder)
+        scan_button = QScanPushButton(path, path_line, self._app_data_folder, self._system_tray)
         scan_button.clicked.connect(scan_button.scan)
         self._paths_layout.addWidget(scan_button, self._paths_row, 1)
 

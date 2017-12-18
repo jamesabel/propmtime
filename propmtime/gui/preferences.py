@@ -119,9 +119,9 @@ class PropMTimePreferences:
         bool_value = False
         if value is not None:
             if type(value) is str:
-                bool_value = bool(strtobool(value))
-            elif type(value) is int:
-                bool_value = bool(value)
+                value = strtobool(value)  # strtobool actually returns an int
+            assert(type(value) is int or type(value) is bool)
+            bool_value = bool(value)
         return bool_value
 
     def set_version(self, value):
@@ -165,16 +165,26 @@ class PropMTimePreferences:
 
     def get_all_paths(self):
         session = self._get_session()
-        paths = [row.path for row in session.query(PathsTable)]
+        paths = {row.path: row.watched for row in session.query(PathsTable)}
+        watches = [row.watched for row in session.query(PathsTable)]
         session.close()
         for path in paths:
             log.debug('get_all_paths : %s' % path)
         return paths
 
+    def set_path_watched(self, path, watched_value):
+        session = self._get_session()
+        session.query(PathsTable).filter_by(path=path).update({"watched": watched_value})
+        session.commit()
+        session.close()
+
     def is_path_watched(self, path):
         session = self._get_session()
-        row = session.query(PathsTable).filter_by(path=path)
-        return self._to_bool(row.watched)
+        watched = [row.watched for row in session.query(PathsTable).filter_by(path=path)]
+        if watched and len(watched) > 0:
+            # should only be one since only one row per path
+            return self._to_bool(watched[0])
+        return False
 
     def get_app_data_folder(self):
         return self.app_data_folder

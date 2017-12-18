@@ -73,15 +73,18 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         do_system = pref.get_do_system()
         log.debug('paths : %s' % paths)
         for path in paths:
-            log.debug(f'instantiating PropMTime with {path,do_hidden,do_system}')
-            scanner = PropMTime(path, True, do_hidden, do_system)
-            scanner.start()
-            log.debug(f'scan started : {path}')
-            self._scanners.append(scanner)
+            self.scan_one(path, do_hidden, do_system)
 
     def scan(self):
-        scan_dialog = ScanDialog(self._app_data_folder)
+        scan_dialog = ScanDialog(self._app_data_folder, self)
         scan_dialog.exec_()
+
+    def scan_one(self, path, do_hidden, do_system):
+        log.debug(f'scan_one : {path,do_hidden,do_system}')
+        scanner = PropMTime(path, True, do_hidden, do_system)
+        scanner.start()
+        log.debug(f'scan started : {path}')
+        self._scanners.append(scanner)
 
     def stop_scan(self):
         request_exit_via_event()  # tell all current scans to stop (if any)

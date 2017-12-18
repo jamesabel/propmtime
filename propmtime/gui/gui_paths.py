@@ -41,6 +41,7 @@ class PathsDialog(QDialog):
         self._paths_row = 0
         self._adds = set()  # paths to add to the preferences DB
         self._removes = set()  # paths to remove from the preferences DB
+        self._watch_check_boxes = {}
         super().__init__()
 
         log.info('preferences folder : %s' % self._app_data_folder)
@@ -63,8 +64,8 @@ class PathsDialog(QDialog):
         paths_box.setWindowTitle('Paths')
         self._paths_layout = QGridLayout()
         paths_box.setLayout(self._paths_layout)
-        for path in pref.get_all_paths():
-            self.add_path_row(path)
+        for path, watched in pref.get_all_paths().items():
+            self.add_path_row(path, watched)
         dialog_layout.addWidget(paths_box)
 
         # "add path" button
@@ -96,7 +97,7 @@ class PathsDialog(QDialog):
             self._adds.add(new_folder)
             self.add_path_row(new_folder)
 
-    def add_path_row(self, path):
+    def add_path_row(self, path, watched):
 
         # path
         path_line = QLineEdit(path)
@@ -109,6 +110,8 @@ class PathsDialog(QDialog):
         watcher_label = QLabel('watch:')
         self._paths_layout.addWidget(watcher_label, self._paths_row, 1)
         watcher_check_box = QCheckBox()
+        watcher_check_box.setChecked(watched)
+        self._watch_check_boxes[path] = watcher_check_box
         self._paths_layout.addWidget(watcher_check_box, self._paths_row, 2)
 
         # remove button
@@ -127,6 +130,10 @@ class PathsDialog(QDialog):
         for remove in self._removes:
             log.info('removing : %s' % remove)
             pref.remove_path(remove)
+        for path, watch_check_box in self._watch_check_boxes.items():
+            is_checked = watch_check_box.isChecked()
+            if pref.is_path_watched(path) != is_checked:
+                pref.set_path_watched(path, is_checked)
         self.close()
 
     def cancel(self):
