@@ -95,7 +95,7 @@ class PathsDialog(QDialog):
             if new_folder in self._removes:
                 self._removes.remove(new_folder)
             self._adds.add(new_folder)
-            self.add_path_row(new_folder)
+            self.add_path_row(new_folder, False)
 
     def add_path_row(self, path, watched):
 
@@ -131,9 +131,10 @@ class PathsDialog(QDialog):
             log.info('removing : %s' % remove)
             pref.remove_path(remove)
         for path, watch_check_box in self._watch_check_boxes.items():
-            is_checked = watch_check_box.isChecked()
-            if pref.is_path_watched(path) != is_checked:
-                pref.set_path_watched(path, is_checked)
+            if path not in self._removes:
+                is_checked = watch_check_box.isChecked()
+                if pref.is_path_watched(path) != is_checked:
+                    pref.set_path_watched(path, is_checked)
         self.close()
 
     def cancel(self):

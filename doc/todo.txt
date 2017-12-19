@@ -1,5 +1,7 @@
 
-- Add MSVCR100.dll to propmtime installer.
+- osnap issues:
+
+  - Add MSVCR100.dll to installer.
 
 - add a manual scan button for each path.
 
