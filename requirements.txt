@@ -8,3 +8,5 @@ pypiwin32 ; sys_platform == 'win32'
 py2app ; sys_platform == 'darwin'
 pytest
 pressenter2exit
+osnap
+

@@ -57,3 +57,5 @@ logs/
 log/
 osnapy/
 cache/
+# do not put MSVC redist in repo
+msvc/

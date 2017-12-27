@@ -1,4 +1,4 @@
-# propmtime (propogate file modification time) #
+# propmtime (propagate file modification time) #
 Author: James Abel
 
 # Installers #
