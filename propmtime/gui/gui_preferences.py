@@ -4,7 +4,6 @@ from PyQt5.QtCore import Qt
 from balsa import get_logger
 
 from propmtime import __application_name__, PropMTimePreferences
-import propmtime.gui.preferences
 
 
 """
@@ -16,7 +15,7 @@ log = get_logger(__application_name__)
 
 class PreferencesDialog(QDialog):
     def __init__(self, app_data_folder):
-        propmtime.logger.log.debug('preferences folder : %s' % app_data_folder)
+        log.debug('preferences folder : %s' % app_data_folder)
 
         pref = PropMTimePreferences(app_data_folder)
 
@@ -56,7 +55,7 @@ class PreferencesDialog(QDialog):
     def ok(self):
         for selection in self.selections:
             if selection['cb'].isChecked() != selection['get']():
-                propmtime.logger.log.info('new preferences for %s : %s --> %s' % (selection['str'], str(selection['get']()), str(selection['cb'].isChecked())))
+                log.info('new preferences for %s : %s --> %s' % (selection['str'], str(selection['get']()), str(selection['cb'].isChecked())))
                 selection['set'](selection['cb'].isChecked())
         self.close()
 

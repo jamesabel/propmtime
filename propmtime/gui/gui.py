@@ -112,6 +112,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         self.join_scans()
         preferences_dialog = PreferencesDialog(self._app_data_folder)
         preferences_dialog.exec_()
+        # todo: update log verbosity (when balsa adds that capability)
         init_exit_control_event()
 
     def about(self):
