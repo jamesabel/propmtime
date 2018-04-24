@@ -5,3 +5,13 @@
 
 - create a test case where a path points to a directory that doesn't actually exist.
 
+- use this code to detect a preferences DB schema change (instead of versions):
+
+    except sqlite3.DatabaseError as e:
+        # catch-all if the DB has an issue or the schema has changed - remove it
+        log.warning('DatabaseError (removing) : %s' % str(e))
+        if conn:
+            conn.close()
+        os.remove(db_path)
+
+    can this be done in SqlAlchemy?

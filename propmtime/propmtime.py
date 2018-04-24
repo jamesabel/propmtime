@@ -3,7 +3,9 @@ import os
 import threading
 import time
 
-from propmtime import get_logger, __application_name__, is_mac, get_file_attributes, init_logger_from_args
+from balsa import get_logger, Balsa
+
+from propmtime import __application_name__, __author__, is_mac, get_file_attributes
 from propmtime import get_long_abs_path, get_arguments, log_selections
 from propmtime import set_blinking, is_exit_requested, init_exit_control_cli
 
@@ -151,7 +153,10 @@ class PropMTime(threading.Thread):
 def cli_main():
 
     args = get_arguments()
-    init_logger_from_args(args)
+
+    balsa = Balsa(__application_name__, __author__)
+    balsa.init_logger_from_args(args)
+
     log_selections(args)
 
     init_exit_control_cli()

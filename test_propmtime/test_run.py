@@ -2,17 +2,20 @@
 import time
 import os
 
+from balsa import get_logger
+
 import propmtime
-import propmtime.logger
 import test_propmtime
+
+log = get_logger("test_propmtime")
 
 
 def get_mtimes(root_folder, file_path):
     root_mtime = os.path.getmtime(root_folder)
     file_mtime = os.path.getmtime(file_path)
-    propmtime.logger.log.info('%s mtime : %f' % (root_folder, root_mtime))
-    propmtime.logger.log.info('%s mtime : %f' % (file_path, file_mtime))
-    propmtime.logger.log.info('difference : %f seconds' % (root_mtime - file_mtime))
+    log.info('%s mtime : %f' % (root_folder, root_mtime))
+    log.info('%s mtime : %f' % (file_path, file_mtime))
+    log.info('difference : %f seconds' % (root_mtime - file_mtime))
     return root_mtime, file_mtime
 
 

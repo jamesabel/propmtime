@@ -5,9 +5,10 @@ import appdirs
 from PyQt5.QtGui import QFontMetrics, QFont
 from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QSystemTrayIcon, QMenu, QDialog, QApplication
 
-from propmtime import __application_name__, __version__, __url__, __author__, init_logger_from_args, request_exit_via_event, \
-    init_exit_control_event
-from propmtime import get_logger, set_verbose
+from balsa import get_logger, Balsa
+
+from propmtime import __application_name__, __version__, __url__, __author__, request_exit_via_event
+from propmtime import init_exit_control_event
 from propmtime import TIMEOUT, PropMTimePreferences, PreferencesDialog, PropMTimeWatcher, get_arguments, PropMTime
 from propmtime import get_icon, init_blink, request_blink_exit, PathsDialog, ScanDialog, init_preferences_db
 
@@ -130,7 +131,10 @@ class PropMTimeSystemTray(QSystemTrayIcon):
 
 def gui_main():
 
-    log, handlers, log_file_path = init_logger_from_args(get_arguments())
+    args = get_arguments()
+
+    balsa = Balsa( __application_name__, __author__)
+    balsa.init_logger_from_args(args)
 
     app_data_folder = appdirs.user_config_dir(appname=__application_name__, appauthor=__author__)
     init_preferences_db(app_data_folder)
@@ -139,6 +143,6 @@ def gui_main():
 
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)  # so popup dialogs don't close the system tray icon
-    system_tray = PropMTimeSystemTray(app, app_data_folder, log_file_path)
+    system_tray = PropMTimeSystemTray(app, app_data_folder, balsa.log_path)
     system_tray.show()
     app.exec_()

@@ -3,7 +3,9 @@ from functools import lru_cache
 
 from PyQt5.QtGui import QIcon, QPixmap, QColor
 
-from propmtime import get_logger, __application_name__
+from balsa import get_logger
+
+from propmtime import __application_name__
 
 # this is needed for there to be an icon (NOTE: PyCharm will say this is unused ... IT ACTUALLY IS - DO NOT DELETE!!!)
 from propmtime import icons

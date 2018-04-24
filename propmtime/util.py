@@ -1,9 +1,11 @@
 
+from balsa import get_logger
+
 import platform
 import os
 import functools
 
-from propmtime import get_logger, __application_name__
+from propmtime import __application_name__
 
 log = get_logger(__application_name__)
 

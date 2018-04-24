@@ -8,7 +8,9 @@ import sqlalchemy.orm
 import sqlalchemy.ext.declarative
 import sqlalchemy.exc
 
-from propmtime import __application_name__, __version__, get_logger, DB_EXTENSION
+from balsa import get_logger
+
+from propmtime import __application_name__, __version__, DB_EXTENSION
 
 log = get_logger(__application_name__)
 

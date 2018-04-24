@@ -2,8 +2,9 @@
 from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QGridLayout, QDialog, QPushButton, QVBoxLayout, QGroupBox
 from PyQt5.Qt import QFontMetrics, QFont
 
-from propmtime import get_logger, __application_name__, PropMTime, PropMTimePreferences, request_exit_via_event
-from propmtime import init_exit_control_event
+from balsa import get_logger
+
+from propmtime import __application_name__, PropMTimePreferences
 
 
 """

@@ -5,7 +5,9 @@ import threading
 
 from pressenter2exit import PressEnter2Exit
 
-from propmtime import __application_name__, get_logger
+from balsa import get_logger
+
+from propmtime import __application_name__
 
 g_exit_control_cli = None
 g_exit_control_event = None  # can be used for GUI

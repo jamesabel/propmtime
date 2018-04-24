@@ -4,7 +4,9 @@ import os
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-from propmtime import TIMEOUT, propmtime_event, get_logger, __application_name__, PropMTimePreferences
+from balsa import get_logger
+
+from propmtime import TIMEOUT, propmtime_event, __application_name__, PropMTimePreferences
 
 log = get_logger(__application_name__)
 

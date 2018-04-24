@@ -1,7 +1,9 @@
 from PyQt5.QtWidgets import QLabel, QDialogButtonBox, QGridLayout, QDialog, QCheckBox
 from PyQt5.QtCore import Qt
 
-from propmtime import __application_name__, get_logger, PropMTimePreferences
+from balsa import get_logger
+
+from propmtime import __application_name__, PropMTimePreferences
 import propmtime.gui.preferences
 
 

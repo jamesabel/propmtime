@@ -1,6 +1,6 @@
 # PEP 440 compliant
 # adhere to http://semver.org/
-__version__ = '0.3.2'
+__version__ = '0.4.0'
 
 # required for OSNAP
 __author__ = 'abel'
@@ -12,7 +12,6 @@ __url__ = 'https://github.com/jamesabel/propmtime'
 DB_EXTENSION = '.db'
 TIMEOUT = 100  # seconds
 
-from .logger import get_logger, init_logger, set_verbose, init_logger_from_args
 from .util import is_linux, is_mac, is_windows, get_file_attributes, get_long_abs_path
 from propmtime.gui import icons
 from propmtime.gui.programmable_icon import get_icon

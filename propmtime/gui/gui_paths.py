@@ -4,7 +4,9 @@ import os
 from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QGridLayout, QDialog, QPushButton, QVBoxLayout, QGroupBox, QFileDialog, QLabel
 from PyQt5.Qt import QFontMetrics, QFont, QCheckBox
 
-from propmtime import get_logger, __application_name__, PropMTimePreferences
+from balsa import get_logger
+
+from propmtime import __application_name__, PropMTimePreferences
 
 
 """

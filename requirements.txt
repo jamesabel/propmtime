@@ -9,4 +9,5 @@ py2app ; sys_platform == 'darwin'
 pytest
 pressenter2exit
 osnap
+balsa
 

@@ -5,7 +5,9 @@ import inspect
 
 import appdirs
 
-from propmtime import __application_name__, __author__, get_logger
+from balsa import get_logger
+
+from propmtime import __application_name__, __author__
 
 log = get_logger(__application_name__)
 
