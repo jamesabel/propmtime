@@ -42,7 +42,6 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         super().__init__(get_icon(False), parent)
 
         pref = PropMTimePreferences(app_data_folder)
-        set_verbose(pref.get_verbose())
         log.info('preferences path : %s' % pref.get_db_path())
 
         self.app = app
