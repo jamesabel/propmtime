@@ -6,6 +6,8 @@ from PyQt5.QtGui import QFontMetrics, QFont
 from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QSystemTrayIcon, QMenu, QDialog, QApplication
 
 from balsa import get_logger, Balsa
+import requests
+from requests.exceptions import ConnectionError
 
 from propmtime import __application_name__, __version__, __url__, __author__, request_exit_via_event
 from propmtime import init_exit_control_event
@@ -133,7 +135,15 @@ def gui_main():
 
     args = get_arguments()
 
-    balsa = Balsa( __application_name__, __author__)
+    try:
+        # todo: today we're redirecting api.abel.co so for this we need to go direct.  In the future have everything on AWS including DNS.
+        sentry_dsn = requests.get('http://l3wp7vlxe8.execute-api.us-west-2.amazonaws.com/dev/apps/propmtime/sentrydsn').text
+        if not (sentry_dsn.startswith('http') and '@sentry.io' in sentry_dsn):
+            sentry_dsn = None
+    except ConnectionError:
+        sentry_dsn = None
+
+    balsa = Balsa( __application_name__, __author__, use_sentry=sentry_dsn is not None, sentry_dsn=sentry_dsn)
     balsa.init_logger_from_args(args)
 
     app_data_folder = appdirs.user_config_dir(appname=__application_name__, appauthor=__author__)

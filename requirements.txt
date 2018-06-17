@@ -10,4 +10,4 @@ pytest
 pressenter2exit
 osnap
 balsa
-
+requests
