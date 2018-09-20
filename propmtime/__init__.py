@@ -5,7 +5,7 @@ __version__ = '0.5.1'
 # required for OSNAP
 __author__ = 'abel'
 __application_name__ = 'propmtime'
-__python_version__ = '3.6.2'
+__python_version__ = '3.6.6'
 
 __url__ = 'https://github.com/jamesabel/propmtime'
 
