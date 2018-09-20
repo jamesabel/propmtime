@@ -10,7 +10,7 @@ import sqlalchemy.exc
 
 from balsa import get_logger
 
-from propmtime import __application_name__, __version__, DB_EXTENSION
+from propmtime import __application_name__, __version__, DB_EXTENSION, convert_to_bool
 
 log = get_logger(__application_name__)
 
@@ -117,15 +117,6 @@ class PropMTimePreferences:
         log.debug('pref_get : %s = %s' % (str(key), str(value)))
         return value
 
-    def _to_bool(self, value):
-        bool_value = False
-        if value is not None:
-            if type(value) is str:
-                value = strtobool(value)  # strtobool actually returns an int
-            assert(type(value) is int or type(value) is bool)
-            bool_value = bool(value)
-        return bool_value
-
     def set_version(self, value):
         self._kv_set(self._version_string, value)
 
@@ -137,21 +128,21 @@ class PropMTimePreferences:
         self._kv_set(self._do_hidden_string, value)
 
     def get_do_hidden(self):
-        return self._to_bool(self._kv_get(self._do_hidden_string))
+        return convert_to_bool(self._kv_get(self._do_hidden_string))
 
     def set_do_system(self, value):
         assert(type(value) is bool)
-        self._kv_set(self._do_system_string, strtobool(value))
+        self._kv_set(self._do_system_string, convert_to_bool(value))
 
     def get_do_system(self):
-        return self._to_bool(self._kv_get(self._do_system_string))
+        return convert_to_bool(self._kv_get(self._do_system_string))
 
     def set_verbose(self, value):
         assert(type(value) is bool)
         self._kv_set(self._verbose_string, value)
 
     def get_verbose(self):
-        return self._to_bool(self._kv_get(self._verbose_string))
+        return convert_to_bool(self._kv_get(self._verbose_string))
 
     def add_path(self, path):
         session = self._get_session()
@@ -185,7 +176,7 @@ class PropMTimePreferences:
         watched = [row.watched for row in session.query(PathsTable).filter_by(path=path)]
         if watched and len(watched) > 0:
             # should only be one since only one row per path
-            return self._to_bool(watched[0])
+            return convert_to_bool(watched[0])
         return False
 
     def get_app_data_folder(self):

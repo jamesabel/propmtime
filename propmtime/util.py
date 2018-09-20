@@ -1,4 +1,6 @@
 
+import distutils.util
+
 from balsa import get_logger
 
 import platform
@@ -76,3 +78,25 @@ def get_long_abs_path(in_path):
     if os.path.isdir(abs_path):
         abs_path += os.sep
     return abs_path
+
+
+def convert_to_bool(orig_input):
+    """
+    performs a casting of a multitude of things (string, int, etc.) to bool.
+    :param orig_input: original variable
+    :return: boolean value of input variable, if possible
+    """
+
+    if isinstance(orig_input, int) and 0 <= orig_input <= 1:
+        new_bool = bool(orig_input)  # 0, 1
+    elif isinstance(orig_input, bool):
+        new_bool = orig_input  # pass through
+    elif orig_input is None:
+        new_bool = False  # along the lines of Python's truthiness
+    elif isinstance(orig_input, str):
+        new_bool = bool(distutils.util.strtobool(orig_input))  # strtobool returns an int
+    else:
+        log.error(f"could not convert {orig_input} to a boolean")
+        new_bool = None
+
+    return new_bool

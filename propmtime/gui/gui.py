@@ -143,7 +143,7 @@ def gui_main():
     except ConnectionError:
         sentry_dsn = None
 
-    balsa = Balsa( __application_name__, __author__, use_sentry=sentry_dsn is not None, sentry_dsn=sentry_dsn)
+    balsa = Balsa( __application_name__, __author__, gui=True, use_sentry=sentry_dsn is not None, sentry_dsn=sentry_dsn)
     balsa.init_logger_from_args(args)
 
     app_data_folder = appdirs.user_config_dir(appname=__application_name__, appauthor=__author__)
