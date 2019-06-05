@@ -1,1 +1,1 @@
-venv\scripts\python -m osnap.osnapy -p 3.6.3
+venv\scripts\python -m osnap.osnapy -p 3.7.3

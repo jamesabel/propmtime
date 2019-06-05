@@ -4,10 +4,10 @@ appdirs
 watchdog
 lxml ; sys_platform == 'win32'
 pypiwin32 ; sys_platform == 'win32'
-# osnap
 py2app ; sys_platform == 'darwin'
 pytest
 pressenter2exit
 osnap
 balsa
 requests
+osnap
