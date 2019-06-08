@@ -135,16 +135,16 @@ def gui_main():
 
     args = get_arguments()
 
-    sentry_dsn_url = 'https://api.abel.com/apps/propmtime/sentrydsn'
+    sentry_dsn_url = r'https://api.abel.co/apps/propmtime/sentrydsn'
+    sentry_dsn_issue = None
     try:
         sentry_dsn = requests.get(sentry_dsn_url).text
         if not (sentry_dsn.startswith('http') and '@sentry.io' in sentry_dsn):
             sentry_dsn = None
-        else:
-            log.info(f"invalid Sentry DSN from {sentry_dsn_url} : {sentry_dsn}")
+            sentry_dsn_issue = f"{sentry_dsn} not a valid Sentry DSN"
     except ConnectionError:
         sentry_dsn = None
-        log.info(f"ConnectionError on Sentry DSN : {sentry_dsn_url}")
+        sentry_dsn_issue = f"ConnectionError on Sentry DSN : {sentry_dsn_url}"
 
     app_data_folder = appdirs.user_config_dir(appname=__application_name__, appauthor=__author__)
     init_preferences_db(app_data_folder)
@@ -156,6 +156,10 @@ def gui_main():
         balsa.sentry_dsn = sentry_dsn
     balsa.verbose = preferences.get_verbose()
     balsa.init_logger_from_args(args)
+
+    log.info(f"Sentry DSN URL : {sentry_dsn_url}")
+    log.info(f"Sentry DSN : {sentry_dsn}")
+    log.info(f"sentry_dsn_issue : {sentry_dsn_issue}")
 
     init_exit_control_event()
 
