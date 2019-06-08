@@ -135,19 +135,27 @@ def gui_main():
 
     args = get_arguments()
 
+    sentry_dsn_url = 'https://api.abel.com/apps/propmtime/sentrydsn'
     try:
-        # todo: today we're redirecting api.abel.co so for this we need to go direct.  In the future have everything on AWS including DNS.
-        sentry_dsn = requests.get('http://l3wp7vlxe8.execute-api.us-west-2.amazonaws.com/dev/apps/propmtime/sentrydsn').text
+        sentry_dsn = requests.get(sentry_dsn_url).text
         if not (sentry_dsn.startswith('http') and '@sentry.io' in sentry_dsn):
             sentry_dsn = None
+        else:
+            log.info(f"invalid Sentry DSN from {sentry_dsn_url} : {sentry_dsn}")
     except ConnectionError:
         sentry_dsn = None
-
-    balsa = Balsa( __application_name__, __author__, gui=True, use_sentry=sentry_dsn is not None, sentry_dsn=sentry_dsn)
-    balsa.init_logger_from_args(args)
+        log.info(f"ConnectionError on Sentry DSN : {sentry_dsn_url}")
 
     app_data_folder = appdirs.user_config_dir(appname=__application_name__, appauthor=__author__)
     init_preferences_db(app_data_folder)
+    preferences = PropMTimePreferences(app_data_folder)
+
+    balsa = Balsa( __application_name__, __author__, gui=True)
+    if sentry_dsn is not None:
+        balsa.use_sentry = True
+        balsa.sentry_dsn = sentry_dsn
+    balsa.verbose = preferences.get_verbose()
+    balsa.init_logger_from_args(args)
 
     init_exit_control_event()
 
