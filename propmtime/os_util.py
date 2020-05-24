@@ -6,7 +6,6 @@ import shutil
 import time
 from pathlib import Path
 import stat
-from platform import system
 from platform import architecture
 
 import win32api
