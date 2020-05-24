@@ -11,9 +11,9 @@ from propmtime import __application_name__, __author__
 log = get_logger(__file__)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def tst_setup():
-    balsa = Balsa(__application_name__, __author__)
+    balsa = Balsa(__application_name__, __author__, log_directory="log", delete_existing_log_files=True, verbose=True)
     balsa.init_logger()
     try:
         shutil.rmtree(test_propmtime.data_root)

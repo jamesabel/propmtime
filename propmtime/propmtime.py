@@ -5,8 +5,8 @@ import time
 
 from balsa import get_logger, Balsa
 
-from propmtime import __application_name__, __author__, is_mac, get_file_attributes
-from propmtime import get_long_abs_path, get_arguments, log_selections
+from propmtime import __application_name__, __author__, is_mac, get_file_attributes, get_long_abs_path
+from propmtime import get_arguments, log_selections
 from propmtime import set_blinking, is_exit_requested, init_exit_control_cli
 
 

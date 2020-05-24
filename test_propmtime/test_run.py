@@ -5,6 +5,7 @@ import os
 from balsa import get_logger
 
 import propmtime
+import propmtime.os_util
 import test_propmtime
 
 log = get_logger("test_propmtime")
@@ -22,13 +23,15 @@ def get_mtimes(root_folder, file_path):
 def run(is_hidden, is_system, root=test_propmtime.data_root):
     current_time = time.time()
     file_name = 'myfile.txt'
-    if propmtime.util.is_mac() and is_hidden:
+    if propmtime.os_util.is_mac() and is_hidden:
         file_name = '.' + file_name
     file_path = os.path.join(test_propmtime.child_folder, file_name)
     test_propmtime.file_creator(current_time, file_path, 1, is_hidden, is_system)
 
     root_mtime, file_mtime = get_mtimes(test_propmtime.data_root, file_path)
-    assert((root_mtime - file_mtime) >= (test_propmtime.time_offset_unit - test_propmtime.time_accuracy_window))
+    root_to_file_time_diff = root_mtime - file_mtime
+    time_window = test_propmtime.time_offset_unit - test_propmtime.time_accuracy_window
+    assert(root_to_file_time_diff >= time_window)
 
     pmt = propmtime.PropMTime(test_propmtime.data_root, True, is_hidden, is_system)
     pmt.start()
