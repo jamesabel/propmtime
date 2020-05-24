@@ -10,3 +10,4 @@ pressenter2exit
 balsa
 requests
 pyship
+black

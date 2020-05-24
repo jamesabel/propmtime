@@ -1,4 +1,3 @@
-
 import threading
 
 from balsa import get_logger
@@ -25,12 +24,12 @@ def set_blinking(value):
 
 def init_blink(sys_tray):
     global _blink
-    log.debug('init_blink')
+    log.debug("init_blink")
     if _blink is None:
         _blink = _Blink(sys_tray)
         _blink.start()
     else:
-        log.error('blink already initialized')
+        log.error("blink already initialized")
 
 
 def request_blink_exit():

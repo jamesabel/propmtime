@@ -1,4 +1,3 @@
-
 from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QGridLayout, QDialog, QPushButton, QVBoxLayout, QGroupBox
 from PyQt5.Qt import QFontMetrics, QFont
 
@@ -16,14 +15,14 @@ log = get_logger(__application_name__)
 
 class QScanPushButton(QPushButton):
     def __init__(self, path, label, app_data_folder, system_tray):
-        super().__init__('Scan')
+        super().__init__("Scan")
         self._path = path
         self._label = label
         self._app_data_folder = app_data_folder
         self._system_tray = system_tray
 
     def scan(self):
-        log.info(f'manual scan of {self._path}')
+        log.info(f"manual scan of {self._path}")
         pref = PropMTimePreferences(self._app_data_folder)
         # use the system tray class to do the actual scan since it keeps track of the running scans
         self._system_tray.stop_scan()
@@ -32,22 +31,22 @@ class QScanPushButton(QPushButton):
 
 class ScanDialog(QDialog):
     def __init__(self, app_data_folder, system_tray):
-        log.debug('starting PathsDialog')
+        log.debug("starting PathsDialog")
         self._app_data_folder = app_data_folder
         self._system_tray = system_tray
         self._paths_row = 0
         super().__init__()
 
-        log.debug('preferences folder : %s' % self._app_data_folder)
+        log.debug("preferences folder : %s" % self._app_data_folder)
         pref = PropMTimePreferences(self._app_data_folder)
 
-        self.setWindowTitle('Scan a Path')
+        self.setWindowTitle("Scan a Path")
         dialog_layout = QVBoxLayout()
         self.setLayout(dialog_layout)
 
         # paths
         paths_box = QGroupBox()
-        paths_box.setWindowTitle('Paths')
+        paths_box.setWindowTitle("Paths")
         self._paths_layout = QGridLayout()
         paths_box.setLayout(self._paths_layout)
         for path in pref.get_all_paths():
@@ -82,4 +81,3 @@ class ScanDialog(QDialog):
 
     def ok(self):
         self.close()
-

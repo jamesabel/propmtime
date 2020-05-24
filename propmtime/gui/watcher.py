@@ -1,4 +1,3 @@
-
 import os
 
 from watchdog.observers import Observer
@@ -19,7 +18,7 @@ class ModHandler(FileSystemEventHandler):
 
     def on_any_event(self, event):
         super().on_any_event(event)
-        log.debug('on_any_event : %s' % event)
+        log.debug("on_any_event : %s" % event)
         pref = PropMTimePreferences(self._app_data_folder)
         if not event.is_directory:
             propmtime_event(self._pmt_path, event.src_path, True, pref.get_do_hidden(), pref.get_do_system())
@@ -38,11 +37,10 @@ class PropMTimeWatcher:
             if watcher:
                 if os.path.exists(path):
                     event_handler = ModHandler(path, self._app_data_folder)
-                    log.info('scheduling watcher : %s' % path)
+                    log.info("scheduling watcher : %s" % path)
                     self._observer.schedule(event_handler, path=path, recursive=True)
                 else:
-                    log.error('Error: "%s" does not exist.\n\nPlease edit the path.\n\nTo do this, click on the %s icon and select "Paths".' %
-                              (path, __application_name__))
+                    log.error('Error: "%s" does not exist.\n\nPlease edit the path.\n\nTo do this, click on the %s icon and select "Paths".' % (path, __application_name__))
         self._observer.start()
 
     def request_exit(self):
@@ -50,4 +48,4 @@ class PropMTimeWatcher:
         self._observer.stop()
         self._observer.join(TIMEOUT)
         if self._observer.isAlive():
-            log.error('observer still alive')
+            log.error("observer still alive")

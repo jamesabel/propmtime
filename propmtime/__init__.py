@@ -1,15 +1,15 @@
 # PEP 440 compliant
 # adhere to http://semver.org/
-__version__ = '0.5.3'
+__version__ = "0.5.3"
 
 # required for OSNAP
-__author__ = 'abel'
-__application_name__ = 'propmtime'
-__python_version__ = '3.6.6'
+__author__ = "abel"
+__application_name__ = "propmtime"
+__python_version__ = "3.6.6"
 
-__url__ = 'https://github.com/jamesabel/propmtime'
+__url__ = "https://github.com/jamesabel/propmtime"
 
-DB_EXTENSION = '.db'
+DB_EXTENSION = ".db"
 TIMEOUT = 100  # seconds
 
 from .os_util import get_file_attributes, get_long_abs_path, convert_to_bool, is_mac, is_linux, is_windows

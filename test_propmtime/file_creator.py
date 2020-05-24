@@ -13,7 +13,7 @@ def file_creator(current_time, file_path, time_offset, is_hidden, is_system):
     file_name = os.path.basename(file_path)
     os.makedirs(folder, exist_ok=True)
     if propmtime.os_util.is_mac() and is_hidden:
-        assert(file_name[0] == '.')
+        assert file_name[0] == "."
     full_path = os.path.join(folder, file_name)
     if propmtime.os_util.is_windows() and os.path.exists(full_path):
         win32api.SetFileAttributes(full_path, win32con.FILE_ATTRIBUTE_NORMAL)

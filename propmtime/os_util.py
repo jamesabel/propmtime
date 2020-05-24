@@ -66,7 +66,7 @@ def rmdir(p: Path, log_function=log.error) -> (bool, bool):
         retry_count += 1
         delay *= 2.0
     if p.exists():
-        log_function(f'could not remove {p} ({retry_count=})', stack_info=True)
+        log_function(f"could not remove {p} ({retry_count=})", stack_info=True)
     else:
         delete_ok = True
     return delete_ok
@@ -114,22 +114,22 @@ def get_file_attributes(in_path):
         try:
             attrib = win32api.GetFileAttributes(in_path)
         except Exception as e:
-            log.info('%s : %s' % (in_path, str(e)))
+            log.info("%s : %s" % (in_path, str(e)))
         if attrib & win32con.FILE_ATTRIBUTE_HIDDEN:
             hidden = False
         if attrib & win32con.FILE_ATTRIBUTE_SYSTEM:
             system = False
     elif is_mac() or is_linux():
-        if '/.' in in_path:
+        if "/." in in_path:
             hidden = True
         else:
             basename = os.path.basename(in_path)
             if len(basename) > 0:
-                if basename[0] == '.':
+                if basename[0] == ".":
                     hidden = True
                 # in Mac, there's a file named 'Icon\r' that we want to ignore
                 # see http://superuser.com/questions/298785/icon-file-on-os-x-desktop
-                if (basename == 'Icon\r') or (basename == 'Icon\n'):
+                if (basename == "Icon\r") or (basename == "Icon\n"):
                     hidden = True
     else:
         raise NotImplementedError
@@ -178,14 +178,14 @@ def convert_to_bool(orig_input):
 @functools.lru_cache()  # platform doesn't change
 def is_mac():
     # darwin
-    return platform.system().lower()[0] == 'd'
+    return platform.system().lower()[0] == "d"
 
 
 @functools.lru_cache()  # platform doesn't change
 def is_linux():
-    return platform.system().lower()[0] == 'l'
+    return platform.system().lower()[0] == "l"
 
 
 @functools.lru_cache()  # platform doesn't change
 def is_windows():
-    return platform.system().lower()[0] == 'w'
+    return platform.system().lower()[0] == "w"

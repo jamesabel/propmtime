@@ -1,4 +1,3 @@
-
 import os
 import threading
 import time
@@ -24,9 +23,9 @@ def propmtime_event(root, event_file_path, update, process_hidden, process_syste
     :param process_system:
     :return:
     """
-    log.info('event : %s , %s' % (root, event_file_path))
+    log.info("event : %s , %s" % (root, event_file_path))
     if _process_file_test(process_hidden, process_system, event_file_path):
-        log.info('processing : %s' % event_file_path)
+        log.info("processing : %s" % event_file_path)
         current_time = time.time()
         current_folder = os.path.dirname(event_file_path)
         while os.path.abspath(current_folder) != os.path.abspath(root):
@@ -39,7 +38,7 @@ def propmtime_event(root, event_file_path, update, process_hidden, process_syste
             except FileNotFoundError as e:
                 log.info(str(e))
     else:
-        log.info('not processed : %s' % event_file_path)
+        log.info("not processed : %s" % event_file_path)
 
 
 def _process_file_test(process_hidden, process_system, path):
@@ -93,7 +92,7 @@ def _do_propagation(containing_folder, fs_objs, current_time, update, process_hi
         mtime = os.path.getmtime(long_path)
         # don't change it if it's close (there can be rounding errors, etc.)
         if abs(latest_time - mtime) > 2 and update:
-            log.debug('updating %s to %s' % (long_path, mtime))
+            log.debug("updating %s to %s" % (long_path, mtime))
             os.utime(long_path, (latest_time, latest_time))
     except OSError as e:
         # these are things like access denied and we don't want to see that under normal operation
@@ -122,10 +121,10 @@ class PropMTime(threading.Thread):
 
         start_time = time.time()
 
-        log.debug(f'{self._root} : scan started')
-        log.debug(f'{self._root} : process_hidden : {self._process_hidden}')
-        log.debug(f'{self._root} : process_system : {self._process_system}')
-        log.debug(f'{self._root} : update : {self._update}')
+        log.debug(f"{self._root} : scan started")
+        log.debug(f"{self._root} : process_hidden : {self._process_hidden}")
+        log.debug(f"{self._root} : process_system : {self._process_system}")
+        log.debug(f"{self._root} : update : {self._update}")
 
         for walk_folder, dirs, files in os.walk(self._root, topdown=False):
             if is_exit_requested():
@@ -133,21 +132,21 @@ class PropMTime(threading.Thread):
             if walk_folder:
                 # For Mac we have to explicitly check to see if this path is hidden.
                 # For Windows this is taken care of with the hidden file attribute.
-                if (is_mac() and (self._process_hidden or '/.' not in walk_folder)) or not is_mac():
+                if (is_mac() and (self._process_hidden or "/." not in walk_folder)) or not is_mac():
                     ffc, ec = _do_propagation(walk_folder, dirs + files, start_time, self._update, self._process_hidden, self._process_system)
                     self.files_folders_count += ffc
                     self.error_count += ec
                 else:
-                    log.debug('skipping %s' % walk_folder)
+                    log.debug("skipping %s" % walk_folder)
             else:
-                log.warn('no os.walk root')
+                log.warn("no os.walk root")
 
         self.total_time = time.time() - start_time
 
-        log.info(f'{self._root} : is_exit_requested : {is_exit_requested()}')
-        log.info(f'{self._root} : file_folders_count : {self.files_folders_count}')
-        log.info(f'{self._root} : error_count : {self.error_count}')
-        log.info(f'{self._root} : total_time : {self.total_time} seconds')
+        log.info(f"{self._root} : is_exit_requested : {is_exit_requested()}")
+        log.info(f"{self._root} : file_folders_count : {self.files_folders_count}")
+        log.info(f"{self._root} : error_count : {self.error_count}")
+        log.info(f"{self._root} : total_time : {self.total_time} seconds")
 
 
 def cli_main():
@@ -166,7 +165,7 @@ def cli_main():
     pmt.join()  # pmt uses exit control
     if not args.silent:
         print()
-        print(f'processed {pmt.files_folders_count} files/folders in {pmt.total_time} seconds')
+        print(f"processed {pmt.files_folders_count} files/folders in {pmt.total_time} seconds")
 
 
 if __name__ == "__main__":
