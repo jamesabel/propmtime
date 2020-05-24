@@ -12,7 +12,7 @@ log = get_logger(__file__)
 
 
 @pytest.fixture(scope="session")
-def pytest_runtest_setup():
+def tst_setup():
     balsa = Balsa(__application_name__, __author__)
     balsa.init_logger()
     try:
