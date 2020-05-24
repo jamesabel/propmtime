@@ -14,4 +14,4 @@ log = get_logger(__file__)
 def tst_setup():
     balsa = Balsa(__application_name__, __author__, log_directory="log", delete_existing_log_files=True, verbose=True)
     balsa.init_logger()
-    rmdir(Path(test_propmtime.data_root))
+    rmdir(Path(test_propmtime.data_parent))

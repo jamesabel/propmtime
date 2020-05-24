@@ -1,8 +1,7 @@
-import os
+from pathlib import Path
 
-data_root = os.path.join("test_propmtime", "data")
-child_folder = os.path.join(data_root, "child")
-time_accuracy_window = 2  # seconds
-time_offset_unit = 24 * 60 * 60  # 1 day
+data_parent = Path("test_propmtime", "data", "parent")
+child_folder = Path(data_parent, "child")
+time_offset_sec = 10.0 * 60.0
 
 from .file_creator import file_creator
