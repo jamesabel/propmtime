@@ -2,7 +2,6 @@
 # adhere to http://semver.org/
 __version__ = "0.6.0"
 
-# required for OSNAP
 __author__ = "abel"
 __application_name__ = "propmtime"
 __python_version__ = "3.8.2"
