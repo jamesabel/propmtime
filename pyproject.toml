@@ -1,0 +1,5 @@
+[project]
+name = "propmtime"
+
+[tool.pyship]
+is_gui = true
