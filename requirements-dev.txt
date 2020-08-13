@@ -13,3 +13,4 @@ ismain
 pyship
 black
 wheel
+typeguard

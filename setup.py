@@ -4,8 +4,7 @@ from setuptools import setup, find_packages
 from propmtime import __application_name__, __version__, __author__
 
 license_file_name = 'LICENSE'
-requirements = ["pyqt5", "sqlalchemy", "appdirs", "watchdog", "lxml", "pypiwin32", "balsa", "requests", "ismain"]
-APP = ['main.py']
+requirements = ["pyqt5", "sqlalchemy", "appdirs", "watchdog", "lxml", "pypiwin32", "balsa", "requests", "ismain", "typeguard", "pressenter2exit"]
 
 setup(
     name=__application_name__,
@@ -17,9 +16,4 @@ setup(
     install_requires=requirements,
     packages=find_packages(),
     package_data={__application_name__: [license_file_name, os.path.join(__application_name__, license_file_name)]},
-
-    app=APP,
-    data_files=[],
-    options={'py2app': {}},
-    setup_requires=requirements,
 )
