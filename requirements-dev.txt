@@ -11,3 +11,4 @@ balsa
 requests
 pyship
 black
+wheel
