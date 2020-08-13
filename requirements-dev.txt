@@ -9,6 +9,7 @@ pytest
 pressenter2exit
 balsa
 requests
+ismain
 pyship
 black
 wheel
