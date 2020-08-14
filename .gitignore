@@ -62,3 +62,4 @@ msvc/
 app/
 installers/
 .eggs/
+*.spec
