@@ -3,3 +3,4 @@ name = "propmtime"
 
 [tool.pyship]
 is_gui = true
+run_on_startup = true

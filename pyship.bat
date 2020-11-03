@@ -1,3 +1,3 @@
 call venv\Scripts\activate.bat
-python -m pyship
+python -m pyship -p default
 deactivate
