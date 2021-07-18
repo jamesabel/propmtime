@@ -2,6 +2,7 @@ import sys
 import appdirs
 
 from PyQt5.QtGui import QFontMetrics, QFont
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QSystemTrayIcon, QMenu, QDialog, QApplication
 
 from balsa import get_logger, Balsa
@@ -37,9 +38,14 @@ class About(QDialog):
 
 
 class PropMTimeSystemTray(QSystemTrayIcon):
+
+    update_tool_tip_signal = pyqtSignal(bool)
+
     def __init__(self, app, app_data_folder, log_file_path, parent=None):
 
         super().__init__(get_icon(False), parent)
+
+        self.update_tool_tip_signal.connect(self.update_tool_tip)
 
         pref = PropMTimePreferences(app_data_folder)
         log.info("preferences path : %s" % pref.get_db_path())
@@ -64,6 +70,15 @@ class PropMTimeSystemTray(QSystemTrayIcon):
 
         init_blink(self)
 
+        self.update_tool_tip(False)
+
+    def update_tool_tip(self, running: bool):
+        if running:
+            tool_tip_string = "Running"
+        else:
+            tool_tip_string = "Ready"
+        self.setToolTip(tool_tip_string)
+
     def scan_all(self):
         self.stop_scan()  # if any scans are running, stop them first
         log.debug("scan_all started : %s" % self._app_data_folder)
@@ -80,8 +95,9 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         scan_dialog.exec_()
 
     def scan_one(self, path, do_hidden, do_system):
+        self.update_tool_tip(True)
         log.debug(f"scan_one : {path,do_hidden,do_system}")
-        scanner = PropMTime(path, True, do_hidden, do_system)
+        scanner = PropMTime(path, True, do_hidden, do_system, self.update_tool_tip_signal.emit)
         scanner.start()
         log.debug(f"scan started : {path}")
         self._scanners.append(scanner)

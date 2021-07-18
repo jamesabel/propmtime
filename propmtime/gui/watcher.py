@@ -47,5 +47,8 @@ class PropMTimeWatcher:
         self._observer.unschedule_all()
         self._observer.stop()
         self._observer.join(TIMEOUT)
-        if self._observer.isAlive():
-            log.error("observer still alive")
+        try:
+            if self._observer.isAlive():
+                log.error("observer still alive")
+        except AttributeError as e:
+            log.info(e)  # for some reason the observer's attributes can disappear

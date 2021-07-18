@@ -8,6 +8,7 @@ py2app ; sys_platform == 'darwin'
 pytest
 pressenter2exit
 balsa
+tobool
 requests
 ismain
 pyship

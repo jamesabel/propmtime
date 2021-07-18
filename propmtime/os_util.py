@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 import stat
 from platform import architecture
+from typing import Tuple, Union
 
 import win32api
 import win32con
@@ -42,7 +43,7 @@ def _remove_readonly_onerror(func, path, excinfo):
 
 
 @typechecked(always=True)
-def rmdir(p: Path, log_function=log.error) -> (bool, bool):
+def rmdir(p: Path, log_function=log.error) -> bool:
     retry_count = 0
     retry_limit = 4
     delete_ok = False
@@ -106,73 +107,63 @@ def copy_tree(source: Path, dest: Path, subdir: str):
     shutil.copytree(str(source), str(dest), ignore=shutil.ignore_patterns("__pycache__"), dirs_exist_ok=True)
 
 
-def get_file_attributes(in_path):
+def get_file_attributes(in_path: Path) -> Tuple[bool, bool]:
     hidden = False
     system = False
+    if in_path.is_file() and in_path.name == ".DS_Store":
+        # special case - this supposedly Apple macOS file seems to make it into lots of places
+        system = True
     if is_windows():
         attrib = 0
         try:
-            attrib = win32api.GetFileAttributes(in_path)
+            attrib = win32api.GetFileAttributes(os.fspath(in_path))
         except Exception as e:
             log.info("%s : %s" % (in_path, str(e)))
         if attrib & win32con.FILE_ATTRIBUTE_HIDDEN:
-            hidden = False
+            hidden = True
         if attrib & win32con.FILE_ATTRIBUTE_SYSTEM:
-            system = False
+            system = True
     elif is_mac() or is_linux():
         if "/." in in_path:
             hidden = True
         else:
-            basename = os.path.basename(in_path)
-            if len(basename) > 0:
-                if basename[0] == ".":
+            name = in_path.name
+            if name is not None and len(name) > 0:
+                if name[0] == ".":
                     hidden = True
                 # in Mac, there's a file named 'Icon\r' that we want to ignore
                 # see http://superuser.com/questions/298785/icon-file-on-os-x-desktop
-                if (basename == "Icon\r") or (basename == "Icon\n"):
+                if (name == "Icon\r") or (name == "Icon\n"):
                     hidden = True
     else:
         raise NotImplementedError
     return hidden, system
 
 
-def get_long_abs_path(in_path):
-    if in_path is None:
-        return None
-    # Trick to get around 260 char limit
-    # http://msdn.microsoft.com/en-us/library/aa365247.aspx#maxpath
-    long_prefix = "\\\\?\\"
-    prefix_len = len(long_prefix)
-    starts_with = in_path[:4].startswith(long_prefix)
-    if is_windows() and ((len(in_path) < prefix_len) or not starts_with):
-        abs_path = long_prefix + os.path.abspath(in_path)
+def get_long_abs_path(in_path_parameter: Union[Path, str, None]) -> Union[Path, None]:
+    if in_path_parameter is None:
+        abs_path = None
+    elif is_windows():
+        # https://twitter.com/brettsky/status/1404521184008413184
+        in_path = os.fspath(in_path_parameter)
+
+        # Trick to get around 260 char limit
+        # http://msdn.microsoft.com/en-us/library/aa365247.aspx#maxpath
+        long_prefix = "\\\\?\\"
+        prefix_len = len(long_prefix)
+        starts_with = in_path[:4].startswith(long_prefix)
+        if is_windows() and ((len(in_path) < prefix_len) or not starts_with):
+            abs_path_str = long_prefix + os.path.abspath(in_path)
+        else:
+            abs_path_str = os.path.abspath(in_path)
+        if os.path.isdir(abs_path_str):
+            abs_path_str += os.sep
+
+        abs_path = Path(abs_path_str)
     else:
-        abs_path = os.path.abspath(in_path)
-    if os.path.isdir(abs_path):
-        abs_path += os.sep
+        abs_path = Path(in_path_parameter).absolute()
+
     return abs_path
-
-
-def convert_to_bool(orig_input):
-    """
-    performs a casting of a multitude of things (string, int, etc.) to bool.
-    :param orig_input: original variable
-    :return: boolean value of input variable, if possible
-    """
-
-    if isinstance(orig_input, int) and 0 <= orig_input <= 1:
-        new_bool = bool(orig_input)  # 0, 1
-    elif isinstance(orig_input, bool):
-        new_bool = orig_input  # pass through
-    elif orig_input is None:
-        new_bool = False  # along the lines of Python's truthiness
-    elif isinstance(orig_input, str):
-        new_bool = bool(distutils.util.strtobool(orig_input))  # strtobool returns an int
-    else:
-        log.error(f"could not convert {orig_input} to a boolean")
-        new_bool = None
-
-    return new_bool
 
 
 @functools.lru_cache()  # platform doesn't change

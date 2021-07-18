@@ -1,6 +1,5 @@
 import os
 import datetime
-from distutils.util import strtobool
 
 import sqlalchemy
 import sqlalchemy.orm
@@ -8,8 +7,9 @@ import sqlalchemy.ext.declarative
 import sqlalchemy.exc
 
 from balsa import get_logger
+from tobool import to_bool
 
-from propmtime import __application_name__, __version__, DB_EXTENSION, convert_to_bool
+from propmtime import __application_name__, __version__, DB_EXTENSION
 
 log = get_logger(__application_name__)
 
@@ -125,21 +125,21 @@ class PropMTimePreferences:
         self._kv_set(self._do_hidden_string, value)
 
     def get_do_hidden(self):
-        return convert_to_bool(self._kv_get(self._do_hidden_string))
+        return to_bool(self._kv_get(self._do_hidden_string))
 
     def set_do_system(self, value):
         assert type(value) is bool
-        self._kv_set(self._do_system_string, convert_to_bool(value))
+        self._kv_set(self._do_system_string, to_bool(value))
 
     def get_do_system(self):
-        return convert_to_bool(self._kv_get(self._do_system_string))
+        return to_bool(self._kv_get(self._do_system_string))
 
     def set_verbose(self, value):
         assert type(value) is bool
         self._kv_set(self._verbose_string, value)
 
     def get_verbose(self):
-        return convert_to_bool(self._kv_get(self._verbose_string))
+        return to_bool(self._kv_get(self._verbose_string))
 
     def add_path(self, path):
         session = self._get_session()
@@ -173,7 +173,7 @@ class PropMTimePreferences:
         watched = [row.watched for row in session.query(PathsTable).filter_by(path=path)]
         if watched and len(watched) > 0:
             # should only be one since only one row per path
-            return convert_to_bool(watched[0])
+            return to_bool(watched[0])
         return False
 
     def get_app_data_folder(self):

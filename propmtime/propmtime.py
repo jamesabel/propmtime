@@ -1,6 +1,8 @@
 import os
 import threading
 import time
+from typing import Callable, Union
+from pathlib import Path
 
 from balsa import get_logger, Balsa
 
@@ -41,7 +43,7 @@ def propmtime_event(root, event_file_path, update, process_hidden, process_syste
         log.info("not processed : %s" % event_file_path)
 
 
-def _process_file_test(process_hidden, process_system, path):
+def _process_file_test(process_hidden: bool, process_system: bool, path: Path):
     if process_hidden and process_system:
         # we're processing everything so just return True
         return True
@@ -106,11 +108,12 @@ def _do_propagation(containing_folder, fs_objs, current_time, update, process_hi
 
 
 class PropMTime(threading.Thread):
-    def __init__(self, root, update, process_hidden, process_system):
+    def __init__(self, root, update: bool, process_hidden: bool, process_system: bool, running_callback: Union[Callable, None]):
         self._root = root
         self._update = update
         self._process_hidden = process_hidden
         self._process_system = process_system
+        self._running_callback = running_callback
         self.error_count = 0
         self.files_folders_count = 0
         self.total_time = None
@@ -148,6 +151,9 @@ class PropMTime(threading.Thread):
         log.info(f"{self._root} : error_count : {self.error_count}")
         log.info(f"{self._root} : total_time : {self.total_time} seconds")
 
+        if self._running_callback is not None:
+            self._running_callback(False)
+
 
 def cli_main():
 
@@ -160,7 +166,7 @@ def cli_main():
 
     init_exit_control_cli()
 
-    pmt = PropMTime(args.path, not args.noupdate, args.hidden, args.system)
+    pmt = PropMTime(args.path, not args.noupdate, args.hidden, args.system, None)
     pmt.start()
     pmt.join()  # pmt uses exit control
     if not args.silent:
