@@ -1,4 +1,3 @@
-
 # This pops up a dialog box in a separate process.  This is to work around a PyQt limitation that
 # dialog boxes can not be created in threads that are not the main thread of an application.
 # Perhaps eventually I'll create some sort of communication to the main thread, but this is easier for now.
@@ -20,5 +19,5 @@ mb.show()
 app.exec()
 """
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     exec(program)

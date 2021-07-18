@@ -1,4 +1,3 @@
-
 # exit request spans both the CLI and the GUI
 
 import threading
@@ -18,10 +17,9 @@ log = get_logger(__application_name__)
 def init_exit_control_cli():
     global g_exit_control_cli
     # ensure nothing has already been initialized
-    assert(g_exit_control_event is None)
-    assert(g_exit_control_cli is None)
-    g_exit_control_cli = PressEnter2Exit(post_message='enter pressed - will now exit',
-                                         pre_message='press enter to interrupt propmtime')
+    assert g_exit_control_event is None
+    assert g_exit_control_cli is None
+    g_exit_control_cli = PressEnter2Exit(post_message="enter pressed - will now exit", pre_message="press enter to interrupt propmtime")
 
 
 def is_exit_requested():

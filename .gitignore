@@ -59,3 +59,7 @@ osnapy/
 cache/
 # do not put MSVC redist in repo
 msvc/
+app/
+installers/
+.eggs/
+*.spec

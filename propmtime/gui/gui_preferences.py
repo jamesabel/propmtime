@@ -15,29 +15,25 @@ log = get_logger(__application_name__)
 
 class PreferencesDialog(QDialog):
     def __init__(self, app_data_folder):
-        log.debug('preferences folder : %s' % app_data_folder)
+        log.debug("preferences folder : %s" % app_data_folder)
 
         pref = PropMTimePreferences(app_data_folder)
 
         super().__init__()
 
         preferences_layout = QGridLayout()
-        headers = ['Option', 'Enabled']
-        col = 0
-        for header in headers:
-            preferences_layout.addWidget(QLabel(header), 0, col)
-            col += 1
-        row = 1
+        row = 0
         self.selections = []
-        self.selections.append({'str': 'Process Hidden Files/Folders', 'set': pref.set_do_hidden, 'get': pref.get_do_hidden})
-        self.selections.append({'str': 'Process System Files/Folders', 'set': pref.set_do_system, 'get': pref.get_do_system})
-        self.selections.append({'str': 'Verbose', 'set': pref.set_verbose, 'get': pref.get_verbose})
+        self.selections.append({"str": "Process Hidden Files/Folders", "set": pref.set_do_hidden, "get": pref.get_do_hidden})
+        self.selections.append({"str": "Process System Files/Folders", "set": pref.set_do_system, "get": pref.get_do_system})
+        self.selections.append({"str": 'Process "dot" Files and Folders as Normal (Instead of as System)', "set": pref.set_process_dot_as_normal, "get": pref.get_process_dot_as_normal})
+        self.selections.append({"str": "Verbose", "set": pref.set_verbose, "get": pref.get_verbose})
         for ss in self.selections:
-            preferences_layout.addWidget(QLabel(ss['str']), row, 0)
-            ss['cb'] = QCheckBox()
-            if ss['get']():
-                ss['cb'].setCheckState(Qt.Checked)
-            preferences_layout.addWidget(ss['cb'], row, 1)
+            preferences_layout.addWidget(QLabel(ss["str"]), row, 0)
+            ss["cb"] = QCheckBox()
+            if ss["get"]():
+                ss["cb"].setCheckState(Qt.Checked)
+            preferences_layout.addWidget(ss["cb"], row, 1)
             row += 1
 
         ok_buttonBox = QDialogButtonBox(QDialogButtonBox.Ok)
@@ -45,8 +41,8 @@ class PreferencesDialog(QDialog):
         cancel_buttonBox = QDialogButtonBox(QDialogButtonBox.Cancel)
         cancel_buttonBox.rejected.connect(self.cancel)
 
-        preferences_layout.addWidget(ok_buttonBox)     # , alignment=QtCore.Qt.AlignLeft)
-        preferences_layout.addWidget(cancel_buttonBox) # , alignment=QtCore.Qt.AlignLeft)
+        preferences_layout.addWidget(ok_buttonBox)  # , alignment=QtCore.Qt.AlignLeft)
+        preferences_layout.addWidget(cancel_buttonBox)  # , alignment=QtCore.Qt.AlignLeft)
 
         self.setLayout(preferences_layout)
 
@@ -54,9 +50,9 @@ class PreferencesDialog(QDialog):
 
     def ok(self):
         for selection in self.selections:
-            if selection['cb'].isChecked() != selection['get']():
-                log.info('new preferences for %s : %s --> %s' % (selection['str'], str(selection['get']()), str(selection['cb'].isChecked())))
-                selection['set'](selection['cb'].isChecked())
+            if selection["cb"].isChecked() != selection["get"]():
+                log.info("new preferences for %s : %s --> %s" % (selection["str"], str(selection["get"]()), str(selection["cb"].isChecked())))
+                selection["set"](selection["cb"].isChecked())
         self.close()
 
     def cancel(self):

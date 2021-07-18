@@ -6,7 +6,7 @@ venv/bin/pip install -r requirements.txt
 #
 # testing tools - these can be ignored when creating the production release - i.e. the frozen executables
 #venv/bin/pip install -U coverage
-# pyautogui will not install properly from requirements.txt
+# pyautogui will not install properly from requirements-dev.txt
 #venv/bin/pip install -U pyobjc-core
 #venv/bin/pip install -U pyobjc
 #venv/bin/pip install -U pyautogui

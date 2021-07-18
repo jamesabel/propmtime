@@ -1,4 +1,3 @@
-
 from functools import lru_cache
 
 from PyQt5.QtGui import QIcon, QPixmap, QColor
@@ -17,16 +16,15 @@ log = get_logger(__application_name__)
 def get_icon(invert):
 
     # https://stackoverflow.com/questions/13350631/simple-color-fill-qicons-in-qt
-    pixmap = QPixmap(':icon.png')
-    assert(pixmap is not None)
+    pixmap = QPixmap(":icon.png")
+    assert pixmap is not None
 
     if invert:
-        log.debug('inverting icon')
+        log.debug("inverting icon")
         mask = pixmap.mask()
-        pixmap.fill((QColor('white')))
+        pixmap.fill((QColor("white")))
         pixmap.setMask(mask)
 
     icon = QIcon(pixmap)
 
     return icon
-

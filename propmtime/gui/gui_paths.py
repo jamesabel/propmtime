@@ -1,4 +1,3 @@
-
 import os
 
 from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QGridLayout, QDialog, QPushButton, QVBoxLayout, QGroupBox, QFileDialog, QLabel
@@ -18,7 +17,7 @@ log = get_logger(__application_name__)
 
 class QRemovePushButton(QPushButton):
     def __init__(self, path, path_line, watch_label, watch_check, removes, adds):
-        super().__init__('Remove')
+        super().__init__("Remove")
         self._path = path
         self._removes = removes
         self._adds = adds
@@ -38,7 +37,7 @@ class QRemovePushButton(QPushButton):
 
 class PathsDialog(QDialog):
     def __init__(self, app_data_folder):
-        log.info('starting PathsDialog')
+        log.info("starting PathsDialog")
         self._app_data_folder = app_data_folder
         self._paths_row = 0
         self._adds = set()  # paths to add to the preferences DB
@@ -46,24 +45,24 @@ class PathsDialog(QDialog):
         self._watch_check_boxes = {}
         super().__init__()
 
-        log.info('preferences folder : %s' % self._app_data_folder)
+        log.info("preferences folder : %s" % self._app_data_folder)
         pref = PropMTimePreferences(self._app_data_folder)
 
-        self.setWindowTitle('Monitor Paths')
+        self.setWindowTitle("Monitor Paths")
         dialog_layout = QVBoxLayout()
         self.setLayout(dialog_layout)
 
         # instructions
         instructions_box = QGroupBox()
         instructions_layout = QGridLayout()
-        instructions_layout.addWidget(QLabel('Only add directories with a reasonable size and that do'))
-        instructions_layout.addWidget(QLabel('not have links to big directories (%s follows links).' % __application_name__))
+        instructions_layout.addWidget(QLabel("Only add directories with a reasonable size and that do"))
+        instructions_layout.addWidget(QLabel("not have links to big directories (%s follows links)." % __application_name__))
         instructions_box.setLayout(instructions_layout)
         dialog_layout.addWidget(instructions_box)
 
         # paths
         paths_box = QGroupBox()
-        paths_box.setWindowTitle('Paths')
+        paths_box.setWindowTitle("Paths")
         self._paths_layout = QGridLayout()
         paths_box.setLayout(self._paths_layout)
         for path, watched in pref.get_all_paths().items():
@@ -74,7 +73,7 @@ class PathsDialog(QDialog):
         add_box = QGroupBox()
         add_layout = QGridLayout()
         add_box.setLayout(add_layout)
-        add_button = QPushButton('Add Path')
+        add_button = QPushButton("Add Path")
         add_button.clicked.connect(self.add_action)
         add_layout.addWidget(add_button, self._paths_row, 1)
         dialog_layout.addWidget(add_box)
@@ -92,7 +91,7 @@ class PathsDialog(QDialog):
         dialog_layout.addWidget(standard_button_box)
 
     def add_action(self):
-        new_folder = QFileDialog.getExistingDirectory(parent=self, caption='Add Folder', options=QFileDialog.ShowDirsOnly, directory=os.path.expandvars('~'))
+        new_folder = QFileDialog.getExistingDirectory(parent=self, caption="Add Folder", options=QFileDialog.ShowDirsOnly, directory=os.path.expandvars("~"))
         if new_folder:
             if new_folder in self._removes:
                 self._removes.remove(new_folder)
@@ -109,7 +108,7 @@ class PathsDialog(QDialog):
         self._paths_layout.addWidget(path_line, self._paths_row, 0)
 
         # watch label and checkbox
-        watcher_label = QLabel('watch:')
+        watcher_label = QLabel("watch:")
         self._paths_layout.addWidget(watcher_label, self._paths_row, 1)
         watcher_check_box = QCheckBox()
         watcher_check_box.setChecked(watched)
@@ -126,11 +125,11 @@ class PathsDialog(QDialog):
     def ok(self):
         pref = PropMTimePreferences(self._app_data_folder)
         for add in self._adds:
-            log.info('adding : %s' % add)
+            log.info("adding : %s" % add)
             if add not in pref.get_all_paths():
                 pref.add_path(add)
         for remove in self._removes:
-            log.info('removing : %s' % remove)
+            log.info("removing : %s" % remove)
             pref.remove_path(remove)
         for path, watch_check_box in self._watch_check_boxes.items():
             if path not in self._removes:
