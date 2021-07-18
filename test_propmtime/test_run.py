@@ -26,10 +26,17 @@ both_mtime = regular_mtime + timedelta(minutes=6).total_seconds()
 
 # (is_hidden, is_system)
 file_mtimes = {(False, False): regular_mtime,
-               (False, True): both_mtime,  # both has system flag set and is the latest
+               (False, True): system_mtime,
                (True, False): hidden_mtime,
                (True, True): both_mtime
                }
+
+# (is_hidden, is_system)
+expected_file_mtimes = {(False, False): regular_mtime,
+                        (False, True): both_mtime,  # both mtime is later than the system-only
+                        (True, False): hidden_mtime,
+                        (True, True): both_mtime
+                        }
 
 
 @typechecked(always=True)
@@ -58,7 +65,7 @@ def check_mtimes(parent_dir: Path, file_path: Path, is_hidden: bool, is_system: 
     file_mtime = os.path.getmtime(str(file_path))
     log.info(f"{parent_dir=} {parent_mtime=}")
     log.info(f"{file_path=} {file_mtime}")
-    expected_parent_mtime = file_mtimes[is_hidden, is_system]
+    expected_parent_mtime = expected_file_mtimes[is_hidden, is_system]
     ok = math.isclose(parent_mtime, expected_parent_mtime, abs_tol=2.0)
     if not ok:
         time_difference = abs(parent_mtime - expected_parent_mtime)
@@ -74,15 +81,28 @@ def run(is_hidden: bool, is_system: bool):
     file_creator(file_path, False, False, True)
 
     # put in system and hidden files at later times
-    file_creator(Path(test_propmtime.child_folder, "my_system_file.txt"), False, True, False)
-    file_creator(Path(test_propmtime.child_folder, "my_hidden_file.txt"), True, False, False)
-    file_creator(Path(test_propmtime.child_folder, "my_hidden_system_file.txt"), True, True, False)
+    system_file_path = Path(test_propmtime.child_folder, "my_system_file.txt")
+    file_creator(system_file_path, False, True, False)
+    hidden_file_path = Path(test_propmtime.child_folder, "my_hidden_file.txt")
+    file_creator(hidden_file_path, True, False, False)
+    both_file_path = Path(test_propmtime.child_folder, "my_hidden_system_file.txt")
+    file_creator(both_file_path, True, True, False)
+
+    # make sure the file mtimes are correct
+    assert math.isclose(os.path.getmtime(hidden_file_path), hidden_mtime, abs_tol=2.0)
+    assert math.isclose(os.path.getmtime(system_file_path), system_mtime, abs_tol=2.0)
+    assert math.isclose(os.path.getmtime(both_file_path), both_mtime, abs_tol=2.0)
 
     pmt = propmtime.PropMTime(test_propmtime.data_parent, True, is_hidden, is_system, lambda x: x)
     pmt.start()
     pmt.join()
 
     check_mtimes(test_propmtime.data_parent, file_path, is_hidden, is_system)
+
+    # make sure the original files times have not changed
+    assert math.isclose(os.path.getmtime(hidden_file_path), hidden_mtime, abs_tol=2.0)
+    assert math.isclose(os.path.getmtime(system_file_path), system_mtime, abs_tol=2.0)
+    assert math.isclose(os.path.getmtime(both_file_path), both_mtime, abs_tol=2.0)
 
 
 def test_normal():
