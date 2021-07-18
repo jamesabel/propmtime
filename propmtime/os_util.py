@@ -20,6 +20,10 @@ from propmtime import __application_name__
 
 log = get_logger(__application_name__)
 
+special_system_files = ["Thumbs.db",  # Windows thumbs but somehow isn't always a system or hidden file
+                        ".DS_Store"  # This supposedly Apple macOS file seems to make it into lots of places
+                        ]
+
 
 @typechecked(always=True)
 def get_target_os() -> (str, None):
@@ -110,8 +114,7 @@ def copy_tree(source: Path, dest: Path, subdir: str):
 def get_file_attributes(in_path: Path) -> Tuple[bool, bool]:
     hidden = False
     system = False
-    if in_path.is_file() and in_path.name == ".DS_Store":
-        # special case - this supposedly Apple macOS file seems to make it into lots of places
+    if in_path.is_file() and in_path.name in special_system_files:
         system = True
     if is_windows():
         attrib = 0
