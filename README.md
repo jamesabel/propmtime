@@ -3,7 +3,7 @@ Author: James Abel
 
 # Installers #
 
-[propmtime windows installer](https://s3.amazonaws.com/abel.co/propmtime/propmtime_installer.exe)
+[propmtime windows installer](https://pyship-abel-propmtime.s3-us-west-2.amazonaws.com/propmtime_installer_win64.exe)
 
 
 # Summary #
