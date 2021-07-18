@@ -46,6 +46,7 @@ class PropMTimePreferences:
 
         self._do_hidden_string = "hidden"
         self._do_system_string = "system"
+        self._process_dot_folders_as_normal_string = "dot_folders_as_normal"
         self._verbose_string = "verbose"
         self._background_monitor_string = "monitor"
         self._version_string = "version"  # this DB (not the overall app)
@@ -133,6 +134,13 @@ class PropMTimePreferences:
 
     def get_do_system(self):
         return to_bool(self._kv_get(self._do_system_string))
+
+    def set_process_dot_folders_as_normal(self, value):
+        assert type(value) is bool
+        self._kv_set(self._process_dot_folders_as_normal_string, to_bool(value))
+
+    def get_process_dot_folders_as_normal(self):
+        return to_bool(self._kv_get(self._process_dot_folders_as_normal_string))
 
     def set_verbose(self, value):
         assert type(value) is bool

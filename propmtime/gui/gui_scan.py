@@ -26,7 +26,7 @@ class QScanPushButton(QPushButton):
         pref = PropMTimePreferences(self._app_data_folder)
         # use the system tray class to do the actual scan since it keeps track of the running scans
         self._system_tray.stop_scan()
-        self._system_tray.scan_one(self._path, pref.get_do_hidden(), pref.get_do_system())
+        self._system_tray.scan_one(self._path, pref.get_do_hidden(), pref.get_do_system(), pref.get_process_dot_folders_as_normal())
 
 
 class ScanDialog(QDialog):

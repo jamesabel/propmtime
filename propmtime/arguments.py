@@ -36,7 +36,15 @@ LICENSE: GPLv3"""
     parser.add_argument("--hidden", action="store_true", help="Process hidden files (default=False)", default=False)
     parser.add_argument("--system", action="store_true", help="Process system files (default=False)", default=False)
     parser.add_argument("-v", "--verbose", action="store_true", default=False, help="Increase verbosity (default=False)")
-    parser.add_argument("-l", "--logdir", default=appdirs.user_log_dir(__application_name__, __author__,), help="Set the log directory (default from appdirs)")
+    parser.add_argument(
+        "-l",
+        "--logdir",
+        default=appdirs.user_log_dir(
+            __application_name__,
+            __author__,
+        ),
+        help="Set the log directory (default from appdirs)",
+    )
     parser.add_argument("-d", "--dellog", action="store_true", default=False, help="Delete existing log files on invocation (default=False)")
     parser.add_argument("-n", "--noupdate", action="store_true", default=False, help='Suppress updating the mtime (do a "dry run") (default=False)')
     args = parser.parse_args()

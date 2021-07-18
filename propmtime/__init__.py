@@ -1,10 +1,9 @@
 # PEP 440 compliant
 # adhere to http://semver.org/
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 
 __author__ = "abel"
 __application_name__ = "propmtime"
-__python_version__ = "3.8.2"
 
 __url__ = "https://github.com/jamesabel/propmtime"
 

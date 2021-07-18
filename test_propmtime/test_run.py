@@ -1,5 +1,4 @@
 import os
-import operator
 from pathlib import Path
 import time
 from datetime import timedelta
@@ -24,19 +23,22 @@ hidden_mtime = regular_mtime + timedelta(minutes=2).total_seconds()
 system_mtime = regular_mtime + timedelta(minutes=4).total_seconds()
 both_mtime = regular_mtime + timedelta(minutes=6).total_seconds()
 
+# fmt: off
+
 # (is_hidden, is_system)
 file_mtimes = {(False, False): regular_mtime,
                (False, True): system_mtime,
                (True, False): hidden_mtime,
-               (True, True): both_mtime
-               }
+               (True, True): both_mtime}
 
 # (is_hidden, is_system)
 expected_file_mtimes = {(False, False): regular_mtime,
-                        (False, True): both_mtime,  # both mtime is later than the system-only
+                        (False, True): both_mtime,
                         (True, False): hidden_mtime,
-                        (True, True): both_mtime
+                        (True, True): both_mtime  # both mtime is later than the system-only
                         }
+
+# fmt: on
 
 
 @typechecked(always=True)
@@ -73,7 +75,7 @@ def check_mtimes(parent_dir: Path, file_path: Path, is_hidden: bool, is_system: 
     assert ok
 
 
-def run(is_hidden: bool, is_system: bool):
+def run(is_hidden: bool, is_system: bool, process_dot_folders_as_normal: bool):
     file_name = "myfile.txt"
     if propmtime.os_util.is_mac() and is_hidden:
         file_name = "." + file_name
@@ -93,7 +95,7 @@ def run(is_hidden: bool, is_system: bool):
     assert math.isclose(os.path.getmtime(system_file_path), system_mtime, abs_tol=2.0)
     assert math.isclose(os.path.getmtime(both_file_path), both_mtime, abs_tol=2.0)
 
-    pmt = propmtime.PropMTime(test_propmtime.data_parent, True, is_hidden, is_system, lambda x: x)
+    pmt = propmtime.PropMTime(test_propmtime.data_parent, True, is_hidden, is_system, process_dot_folders_as_normal, lambda x: x)
     pmt.start()
     pmt.join()
 
@@ -106,16 +108,16 @@ def run(is_hidden: bool, is_system: bool):
 
 
 def test_normal():
-    run(False, False)
+    run(False, False, False)
 
 
 def test_hidden():
-    run(True, False)
+    run(True, False, False)
 
 
 def test_system():
-    run(False, True)
+    run(False, True, False)
 
 
 def test_both():
-    run(True, True)
+    run(True, True, False)
