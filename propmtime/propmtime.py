@@ -59,10 +59,10 @@ def _do_propagation(containing_folder, fs_objs, current_time, update: bool, proc
     :param current_time: current time in seconds from epoch
     :return: file_folders_count, error_count
     """
+    error_count = 0
     files_folders_count = 0
     containing_folder_path = Path(containing_folder)
     if containing_folder_path.is_dir():
-        error_count = 0
         set_blinking(True)
         latest_time = 0  # empty folders get an mtime of the epoch
         for fs_obj in fs_objs:
@@ -111,7 +111,7 @@ def _do_propagation(containing_folder, fs_objs, current_time, update: bool, proc
 
     else:
         log.error(f"{containing_folder_path=} is not a directory")
-        error_count = 1
+        error_count += 1
     return files_folders_count, error_count
 
 
