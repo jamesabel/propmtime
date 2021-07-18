@@ -86,19 +86,19 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         paths = pref.get_all_paths()
         do_hidden = pref.get_do_hidden()
         do_system = pref.get_do_system()
-        process_dot_folders_as_normal = pref.get_process_dot_folders_as_normal()
+        process_dot_as_normal = pref.get_process_dot_as_normal()
         log.debug("paths : %s" % paths)
         for path in paths:
-            self.scan_one(path, do_hidden, do_system, process_dot_folders_as_normal)
+            self.scan_one(path, do_hidden, do_system, process_dot_as_normal)
 
     def scan(self):
         scan_dialog = ScanDialog(self._app_data_folder, self)
         scan_dialog.exec_()
 
-    def scan_one(self, path, do_hidden: bool, do_system: bool, process_dot_folders_as_normal: bool):
+    def scan_one(self, path, do_hidden: bool, do_system: bool, process_dot_as_normal: bool):
         self.update_tool_tip(True)
         log.debug(f"scan_one : {path,do_hidden,do_system}")
-        scanner = PropMTime(path, True, do_hidden, do_system, process_dot_folders_as_normal, self.update_tool_tip_signal.emit)
+        scanner = PropMTime(path, True, do_hidden, do_system, process_dot_as_normal, self.update_tool_tip_signal.emit)
         scanner.start()
         log.debug(f"scan started : {path}")
         self._scanners.append(scanner)

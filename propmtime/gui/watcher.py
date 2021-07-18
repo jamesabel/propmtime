@@ -21,7 +21,7 @@ class ModHandler(FileSystemEventHandler):
         log.debug("on_any_event : %s" % event)
         pref = PropMTimePreferences(self._app_data_folder)
         if not event.is_directory:
-            propmtime_event(self._pmt_path, event.src_path, True, pref.get_do_hidden(), pref.get_do_system(), pref.get_process_dot_folders_as_normal())
+            propmtime_event(self._pmt_path, event.src_path, True, pref.get_do_hidden(), pref.get_do_system(), pref.get_process_dot_as_normal())
 
 
 class PropMTimeWatcher:

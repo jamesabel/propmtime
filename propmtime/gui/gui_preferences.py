@@ -26,7 +26,7 @@ class PreferencesDialog(QDialog):
         self.selections = []
         self.selections.append({"str": "Process Hidden Files/Folders", "set": pref.set_do_hidden, "get": pref.get_do_hidden})
         self.selections.append({"str": "Process System Files/Folders", "set": pref.set_do_system, "get": pref.get_do_system})
-        self.selections.append({"str": 'Process "dot" Folders as Normal (Instead of as System Folders)', "set": pref.set_process_dot_folders_as_normal, "get": pref.get_process_dot_folders_as_normal})
+        self.selections.append({"str": 'Process "dot" Files and Folders as Normal (Instead of as System Folders)', "set": pref.set_process_dot_as_normal, "get": pref.get_process_dot_as_normal})
         self.selections.append({"str": "Verbose", "set": pref.set_verbose, "get": pref.get_verbose})
         for ss in self.selections:
             preferences_layout.addWidget(QLabel(ss["str"]), row, 0)
