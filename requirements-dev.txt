@@ -16,5 +16,6 @@ black
 wheel
 typeguard
 sentry-sdk
+flake8
 mypy
 PyQt5-stubs
