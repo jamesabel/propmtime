@@ -16,9 +16,9 @@ from propmtime import __application_name__
 
 log = get_logger(__application_name__)
 
-special_system_files = ["Thumbs.db",  # Windows thumbs but somehow isn't always a system or hidden file
-                        ".DS_Store"  # This supposedly Apple macOS file seems to make it into lots of places
-                        ]
+# "Thumbs.db": Windows thumbs but somehow isn't always a system or hidden file
+# ".DS_Store": This supposedly Apple macOS file seems to make it into lots of places
+special_system_files = ["Thumbs.db", ".DS_Store"]
 
 
 @typechecked(always=True)

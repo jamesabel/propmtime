@@ -153,8 +153,9 @@ class PropMTime(threading.Thread):
                 # For Mac we have to explicitly check to see if this path is hidden.
                 # For Windows this is taken care of with the hidden file attribute.
                 if (is_mac() and (self._process_hidden or "/." not in walk_folder)) or not is_mac():
-                    ffc, ec = _do_propagation(walk_folder, dirs + files, start_time, self._update, self._process_hidden, self._process_system, self._process_dot_as_normal,
-                                              self._running_callback)
+                    ffc, ec = _do_propagation(
+                        walk_folder, dirs + files, start_time, self._update, self._process_hidden, self._process_system, self._process_dot_as_normal, self._running_callback
+                    )
                     self.files_folders_count += ffc
                     self.error_count += ec
                 else:
