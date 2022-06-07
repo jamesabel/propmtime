@@ -15,3 +15,4 @@ pyship
 black
 wheel
 typeguard
+sentry-sdk

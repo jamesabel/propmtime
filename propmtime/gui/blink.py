@@ -2,7 +2,8 @@ import threading
 
 from balsa import get_logger
 
-from propmtime import is_windows, get_icon, __application_name__, TIMEOUT
+from propmtime import is_windows, __application_name__, TIMEOUT
+from propmtime.gui import get_icon
 
 _blinking = False  # blinking flag
 _blink = None  # the one and only instance of Blink class

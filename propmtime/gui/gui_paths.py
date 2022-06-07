@@ -5,7 +5,8 @@ from PyQt5.Qt import QFontMetrics, QFont, QCheckBox
 
 from balsa import get_logger
 
-from propmtime import __application_name__, PropMTimePreferences
+from propmtime import __application_name__
+from propmtime.gui import PropMTimePreferences
 
 
 """
@@ -101,10 +102,11 @@ class PathsDialog(QDialog):
     def add_path_row(self, path, watched):
 
         # path
+        path = str(path)
         path_line = QLineEdit(path)
         path_line.setReadOnly(True)
         width = QFontMetrics(QFont()).width(path) * 1.05
-        path_line.setMinimumWidth(width)
+        path_line.setMinimumWidth(int(round(width)))
         self._paths_layout.addWidget(path_line, self._paths_row, 0)
 
         # watch label and checkbox

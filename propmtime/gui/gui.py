@@ -1,18 +1,16 @@
-import sys
-import appdirs
+
 
 from PyQt5.QtGui import QFontMetrics, QFont
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QSystemTrayIcon, QMenu, QDialog, QApplication
 
-from balsa import get_logger, Balsa
-import requests
-from requests.exceptions import ConnectionError
+from balsa import get_logger
 
-from propmtime import __application_name__, __version__, __url__, __author__, request_exit_via_event
-from propmtime import init_exit_control_event
-from propmtime import TIMEOUT, PropMTimePreferences, PreferencesDialog, PropMTimeWatcher, get_arguments, PropMTime
-from propmtime import get_icon, init_blink, request_blink_exit, PathsDialog, ScanDialog, init_preferences_db
+
+from propmtime import __application_name__, __version__, __url__, request_exit_via_event
+from propmtime import init_exit_control_event, TIMEOUT, PropMTime
+from propmtime.gui import PropMTimePreferences, PreferencesDialog, PropMTimeWatcher, set_blinking
+from propmtime.gui import get_icon, init_blink, request_blink_exit, PathsDialog, ScanDialog, init_preferences_db
 
 log = get_logger(__application_name__)
 
@@ -29,11 +27,12 @@ class About(QDialog):
         self.show()
 
     def add_line(self, label, value, row_number, layout):
+        value = str(value)
         layout.addWidget(QLabel(label), row_number, 0)
         log_dir_widget = QLineEdit(value)
         log_dir_widget.setReadOnly(True)
         width = QFontMetrics(QFont()).width(value) * 1.05
-        log_dir_widget.setMinimumWidth(width)
+        log_dir_widget.setMinimumWidth(int(round(width)))
         layout.addWidget(log_dir_widget, row_number + 1, 0)
 
 
@@ -64,7 +63,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         menu.addAction("Exit").triggered.connect(self.exit)
         self.setContextMenu(menu)
 
-        self._watcher = PropMTimeWatcher(self._app_data_folder)
+        self._watcher = PropMTimeWatcher(self._app_data_folder, set_blinking)
 
         self._scanners = []
 
@@ -144,42 +143,3 @@ class PropMTimeSystemTray(QSystemTrayIcon):
             self._watcher.request_exit()
         self.hide()
         QApplication.exit()  # todo: what should this parameter be?
-
-
-def gui_main():
-
-    args = get_arguments()
-
-    sentry_dsn_url = r"https://api.abel.co/apps/propmtime/sentrydsn"
-    sentry_dsn_issue = None
-    try:
-        sentry_dsn = requests.get(sentry_dsn_url).text
-        if not (sentry_dsn.startswith("http") and "@sentry.io" in sentry_dsn):
-            sentry_dsn = None
-            sentry_dsn_issue = f"{sentry_dsn} not a valid Sentry DSN"
-    except ConnectionError:
-        sentry_dsn = None
-        sentry_dsn_issue = f"ConnectionError on Sentry DSN : {sentry_dsn_url}"
-
-    app_data_folder = appdirs.user_config_dir(appname=__application_name__, appauthor=__author__)
-    init_preferences_db(app_data_folder)
-    preferences = PropMTimePreferences(app_data_folder)
-
-    balsa = Balsa(__application_name__, __author__, gui=True)
-    if sentry_dsn is not None:
-        balsa.use_sentry = True
-        balsa.sentry_dsn = sentry_dsn
-    balsa.verbose = preferences.get_verbose()
-    balsa.init_logger_from_args(args)
-
-    log.info(f"Sentry DSN URL : {sentry_dsn_url}")
-    log.info(f"Sentry DSN : {sentry_dsn}")
-    log.info(f"sentry_dsn_issue : {sentry_dsn_issue}")
-
-    init_exit_control_event()
-
-    app = QApplication(sys.argv)
-    app.setQuitOnLastWindowClosed(False)  # so popup dialogs don't close the system tray icon
-    system_tray = PropMTimeSystemTray(app, app_data_folder, balsa.log_path)
-    system_tray.show()
-    app.exec_()

@@ -1,4 +1,3 @@
-
-from propmtime import cli_main
+from propmtime.cli import __main__
 
 cli_main()

@@ -3,7 +3,8 @@ from PyQt5.QtCore import Qt
 
 from balsa import get_logger
 
-from propmtime import __application_name__, PropMTimePreferences
+from propmtime import __application_name__
+from propmtime.gui import PropMTimePreferences
 
 
 """

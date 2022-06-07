@@ -5,28 +5,31 @@ from watchdog.events import FileSystemEventHandler
 
 from balsa import get_logger
 
-from propmtime import TIMEOUT, propmtime_event, __application_name__, PropMTimePreferences
+from propmtime import TIMEOUT, propmtime_event, __application_name__
+from propmtime.gui import PropMTimePreferences
 
 log = get_logger(__application_name__)
 
 
 class ModHandler(FileSystemEventHandler):
-    def __init__(self, path, app_data_folder):
+    def __init__(self, path, app_data_folder, set_blinking):
         super().__init__()
         self._pmt_path = path
         self._app_data_folder = app_data_folder
+        self.set_blinking = set_blinking
 
     def on_any_event(self, event):
         super().on_any_event(event)
         log.debug("on_any_event : %s" % event)
         pref = PropMTimePreferences(self._app_data_folder)
         if not event.is_directory:
-            propmtime_event(self._pmt_path, event.src_path, True, pref.get_do_hidden(), pref.get_do_system(), pref.get_process_dot_as_normal())
+            propmtime_event(self._pmt_path, event.src_path, True, pref.get_do_hidden(), pref.get_do_system(), pref.get_process_dot_as_normal(), self.set_blinking)
 
 
 class PropMTimeWatcher:
-    def __init__(self, app_data_folder):
+    def __init__(self, app_data_folder, set_blinking):
         self._app_data_folder = app_data_folder
+        self.set_blinking = set_blinking
         self._observer = Observer()
         self.schedule()
 
@@ -36,7 +39,7 @@ class PropMTimeWatcher:
         for path, watcher in pref.get_all_paths().items():
             if watcher:
                 if os.path.exists(path):
-                    event_handler = ModHandler(path, self._app_data_folder)
+                    event_handler = ModHandler(path, self._app_data_folder, self.set_blinking)
                     log.info("scheduling watcher : %s" % path)
                     self._observer.schedule(event_handler, path=path, recursive=True)
                 else:

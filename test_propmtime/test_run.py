@@ -8,6 +8,7 @@ from balsa import get_logger
 from typeguard import typechecked
 
 import propmtime
+from propmtime.gui import set_blinking
 import propmtime.os_util
 import test_propmtime
 from propmtime import mkdirs
@@ -95,7 +96,7 @@ def run(is_hidden: bool, is_system: bool, process_dot_folders_as_normal: bool):
     assert math.isclose(os.path.getmtime(system_file_path), system_mtime, abs_tol=2.0)
     assert math.isclose(os.path.getmtime(both_file_path), both_mtime, abs_tol=2.0)
 
-    pmt = propmtime.PropMTime(test_propmtime.data_parent, True, is_hidden, is_system, process_dot_folders_as_normal, lambda x: x)
+    pmt = propmtime.PropMTime(test_propmtime.data_parent, True, is_hidden, is_system, process_dot_folders_as_normal, lambda x: x, set_blinking)
     pmt.start()
     pmt.join()
 
