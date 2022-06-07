@@ -22,7 +22,7 @@ def get_arguments():
     desc = textwrap.dedent(
         """
 Most OSs (including Windows and MacOS) only change the modification time of a folder/directory based on its immediate
-children.  propmtime analyzes a folder and all of its children, and propagates (updates) the modification times of 
+children.  propmtime analyzes a folder and all of its children, and propagates (updates) the modification times of
 each folder to be the most recent time of all of its children.
 
 Author: James Abel

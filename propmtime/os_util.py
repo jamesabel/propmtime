@@ -3,7 +3,7 @@ import os
 import platform
 from pathlib import Path
 from platform import architecture
-from typing import Tuple, Union
+from typing import Tuple
 
 import win32api
 import win32con
@@ -21,16 +21,17 @@ log = get_logger(__application_name__)
 special_system_files = ["Thumbs.db", ".DS_Store"]
 
 
-@typechecked(always=True)
-def get_target_os() -> (str, None):
+@typechecked()
+def get_target_os() -> str:
     if is_windows():
         bit_string, os_string = architecture()
         target_os = f"{os_string[0:3].lower()}{bit_string[0:2]}"
     else:
-        target_os = None
+        raise NotImplementedError("unsupported OS")
     return target_os
 
 
+@typechecked()
 def get_file_attributes(in_path: Path) -> Tuple[bool, bool]:
     hidden = False
     system = False
@@ -47,7 +48,7 @@ def get_file_attributes(in_path: Path) -> Tuple[bool, bool]:
         if attrib & win32con.FILE_ATTRIBUTE_SYSTEM:
             system = True
     elif is_mac() or is_linux():
-        if "/." in in_path:
+        if "/." in in_path.name:
             hidden = True
         else:
             name = in_path.name
@@ -63,10 +64,10 @@ def get_file_attributes(in_path: Path) -> Tuple[bool, bool]:
     return hidden, system
 
 
-def get_long_abs_path(in_path_parameter: Union[Path, str, None]) -> Union[Path, None]:
-    if in_path_parameter is None:
-        abs_path = None
-    elif is_windows():
+@typechecked()
+def get_long_abs_path(in_path_parameter: Path) -> Path:
+
+    if is_windows():
         # https://twitter.com/brettsky/status/1404521184008413184
         in_path = os.fspath(in_path_parameter)
 

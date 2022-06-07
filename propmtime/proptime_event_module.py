@@ -1,10 +1,11 @@
 import os
 from pathlib import Path
 import time
-from typing import Callable, Union
+from typing import Callable, Union, List
 import threading
 
 from balsa import get_logger
+from typeguard import typechecked
 
 from propmtime import __application_name__, get_file_attributes, get_long_abs_path, is_mac, is_exit_requested
 
@@ -12,6 +13,7 @@ from propmtime import __application_name__, get_file_attributes, get_long_abs_pa
 log = get_logger(__application_name__)
 
 
+@typechecked()
 def _process_file_test(process_hidden: bool, process_system: bool, path: Path):
     if process_hidden and process_system:
         # we're processing everything so just return True
@@ -20,7 +22,10 @@ def _process_file_test(process_hidden: bool, process_system: bool, path: Path):
     return (not (is_hidden or is_system)) or (is_hidden and process_hidden) or (is_system and process_system)
 
 
-def _do_propagation(containing_folder, fs_objs, current_time, update: bool, process_hidden: bool, process_system: bool, process_dot_as_normal: bool, running_callback: Union[Callable, None]):
+@typechecked()
+def _do_propagation(
+    containing_folder: Path, fs_objs: List, current_time: float, update: bool, process_hidden: bool, process_system: bool, process_dot_as_normal: bool, running_callback: Union[Callable, None]
+):
     """
     propagate the mtime of one folder
     :param containing_folder: parent folder
@@ -39,9 +44,9 @@ def _do_propagation(containing_folder, fs_objs, current_time, update: bool, proc
     if containing_folder_path.is_dir():
         if running_callback is not None:
             running_callback(True)
-        latest_time = 0  # empty folders get an mtime of the epoch
+        latest_time = 0.0  # empty folders get an mtime of the epoch
         for fs_obj in fs_objs:
-            long_full_path = get_long_abs_path(os.path.join(containing_folder, fs_obj))
+            long_full_path = get_long_abs_path(Path(containing_folder, fs_obj))
             if not process_dot_as_normal and len(long_full_path.name) > 0 and long_full_path.name[0] == ".":
                 log.debug(f"skipping dot file/folder {long_full_path=}")
             elif _process_file_test(process_hidden, process_system, long_full_path):
@@ -92,6 +97,7 @@ def _do_propagation(containing_folder, fs_objs, current_time, update: bool, proc
     return files_folders_count, error_count
 
 
+@typechecked()
 def propmtime_event(root, event_file_path, update, process_hidden: bool, process_system: bool, process_dot_as_normal: bool, running_callback: Union[Callable, None]):
     """
     propmtime upon a watchdog event
@@ -123,6 +129,7 @@ def propmtime_event(root, event_file_path, update, process_hidden: bool, process
 
 
 class PropMTime(threading.Thread):
+    @typechecked()
     def __init__(self, root, update: bool, process_hidden: bool, process_system: bool, process_dot_as_normal: bool, running_callback: Union[Callable, None]):
         self._root = root
         self._update = update
@@ -154,7 +161,7 @@ class PropMTime(threading.Thread):
                 # For Windows this is taken care of with the hidden file attribute.
                 if (is_mac() and (self._process_hidden or "/." not in walk_folder)) or not is_mac():
                     ffc, ec = _do_propagation(
-                        walk_folder, dirs + files, start_time, self._update, self._process_hidden, self._process_system, self._process_dot_as_normal, self._running_callback
+                        Path(walk_folder), dirs + files, start_time, self._update, self._process_hidden, self._process_system, self._process_dot_as_normal, self._running_callback
                     )
                     self.files_folders_count += ffc
                     self.error_count += ec

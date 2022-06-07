@@ -1,5 +1,6 @@
 import os
 import datetime
+from typing import Dict
 
 import sqlalchemy
 import sqlalchemy.orm
@@ -8,6 +9,7 @@ import sqlalchemy.exc
 
 from balsa import get_logger
 from tobool import to_bool
+from typeguard import typechecked
 
 from propmtime import __application_name__, __version__, DB_EXTENSION
 
@@ -40,7 +42,9 @@ class PathsTable(Base):
 
 
 class PropMTimePreferences:
-    def __init__(self, app_data_folder, init=False):
+
+    @typechecked()
+    def __init__(self, app_data_folder: str, init=False):
 
         log.debug("Preferences __init__")
 
@@ -115,68 +119,82 @@ class PropMTimePreferences:
         log.debug("pref_get : %s = %s" % (str(key), str(value)))
         return value
 
-    def set_version(self, value):
+    @typechecked()
+    def set_version(self, value: str):
         self._kv_set(self._version_string, value)
 
-    def get_version(self):
+    @typechecked()
+    def get_version(self) -> str:
         return self._kv_get(self._version_string)
 
-    def set_do_hidden(self, value):
+    @typechecked()
+    def set_do_hidden(self, value: bool):
         assert type(value) is bool
         self._kv_set(self._do_hidden_string, value)
 
-    def get_do_hidden(self):
+    @typechecked()
+    def get_do_hidden(self) -> bool:
         return to_bool(self._kv_get(self._do_hidden_string))
 
-    def set_do_system(self, value):
+    @typechecked()
+    def set_do_system(self, value: bool):
         assert type(value) is bool
         self._kv_set(self._do_system_string, to_bool(value))
 
-    def get_do_system(self):
+    @typechecked()
+    def get_do_system(self) -> bool:
         return to_bool(self._kv_get(self._do_system_string))
 
-    def set_process_dot_as_normal(self, value):
+    @typechecked()
+    def set_process_dot_as_normal(self, value: bool):
         assert type(value) is bool
         self._kv_set(self._process_dot_as_normal_string, to_bool(value))
 
-    def get_process_dot_as_normal(self):
+    @typechecked()
+    def get_process_dot_as_normal(self) -> bool:
         return to_bool(self._kv_get(self._process_dot_as_normal_string))
 
-    def set_verbose(self, value):
+    @typechecked()
+    def set_verbose(self, value: bool):
         assert type(value) is bool
         self._kv_set(self._verbose_string, value)
 
-    def get_verbose(self):
+    @typechecked()
+    def get_verbose(self) -> bool:
         return to_bool(self._kv_get(self._verbose_string))
 
-    def add_path(self, path):
+    @typechecked()
+    def add_path(self, path: str):
         session = self._get_session()
         session.add(PathsTable(path=path, watched=False, datetime=datetime.datetime.utcnow()))
         session.commit()
         session.close()
 
-    def remove_path(self, path):
+    @typechecked()
+    def remove_path(self, path: str):
         session = self._get_session()
         session.query(PathsTable).filter_by(path=path).delete()
         session.commit()
         session.close()
 
-    def get_all_paths(self):
+    @typechecked()
+    def get_all_paths(self) -> Dict[str, bool]:
         session = self._get_session()
         paths = {row.path: row.watched for row in session.query(PathsTable)}
-        watches = [row.watched for row in session.query(PathsTable)]
         session.close()
         for path in paths:
             log.debug("get_all_paths : %s" % path)
         return paths
 
-    def set_path_watched(self, path, watched_value):
+    @typechecked()
+    def set_path_watched(self, path: str, watched_value: bool):
         session = self._get_session()
         session.query(PathsTable).filter_by(path=path).update({"watched": watched_value})
         session.commit()
         session.close()
 
-    def is_path_watched(self, path):
+    @typechecked()
+    def is_path_watched(self, path: str):
         session = self._get_session()
         watched = [row.watched for row in session.query(PathsTable).filter_by(path=path)]
         if watched and len(watched) > 0:
