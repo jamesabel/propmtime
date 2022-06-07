@@ -71,7 +71,7 @@ class PathsDialog(QDialog):
         self._paths_layout = QGridLayout()
         paths_box.setLayout(self._paths_layout)
         for path, watched in pref.get_all_paths().items():
-            self.add_path_row(path, watched)
+            self.add_path_row(Path(path), watched)
         dialog_layout.addWidget(paths_box)
 
         # "add path" button
@@ -101,7 +101,7 @@ class PathsDialog(QDialog):
             if new_folder in self._removes:
                 self._removes.remove(new_folder)
             self._adds.add(new_folder)
-            self.add_path_row(new_folder, False)
+            self.add_path_row(Path(new_folder), False)
 
     def add_path_row(self, path: Path, watched):
 
@@ -133,10 +133,10 @@ class PathsDialog(QDialog):
         for add in self._adds:
             log.info("adding : %s" % add)
             if add not in pref.get_all_paths():
-                pref.add_path(add)
+                pref.add_path(str(add))
         for remove in self._removes:
             log.info("removing : %s" % remove)
-            pref.remove_path(remove)
+            pref.remove_path(str(remove))
         for path, watch_check_box in self._watch_check_boxes.items():
             if path not in self._removes:
                 is_checked = watch_check_box.isChecked()

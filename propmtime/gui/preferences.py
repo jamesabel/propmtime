@@ -106,7 +106,7 @@ class PropMTimePreferences:
         session.close()
         log.debug("exiting pref_set")
 
-    def _kv_get(self, key):
+    def _kv_get(self, key, default = None):
         value = None
         session = self._get_session()
         try:
@@ -117,6 +117,8 @@ class PropMTimePreferences:
             value = row.value
         session.close()
         log.debug("pref_get : %s = %s" % (str(key), str(value)))
+        if value is None:
+            value = default
         return value
 
     @typechecked()
@@ -134,7 +136,7 @@ class PropMTimePreferences:
 
     @typechecked()
     def get_do_hidden(self) -> bool:
-        return to_bool(self._kv_get(self._do_hidden_string))
+        return to_bool(self._kv_get(self._do_hidden_string, False))
 
     @typechecked()
     def set_do_system(self, value: bool):
@@ -143,7 +145,7 @@ class PropMTimePreferences:
 
     @typechecked()
     def get_do_system(self) -> bool:
-        return to_bool(self._kv_get(self._do_system_string))
+        return to_bool(self._kv_get(self._do_system_string, False))
 
     @typechecked()
     def set_process_dot_as_normal(self, value: bool):
@@ -152,7 +154,7 @@ class PropMTimePreferences:
 
     @typechecked()
     def get_process_dot_as_normal(self) -> bool:
-        return to_bool(self._kv_get(self._process_dot_as_normal_string))
+        return to_bool(self._kv_get(self._process_dot_as_normal_string, False))
 
     @typechecked()
     def set_verbose(self, value: bool):
@@ -161,7 +163,10 @@ class PropMTimePreferences:
 
     @typechecked()
     def get_verbose(self) -> bool:
-        return to_bool(self._kv_get(self._verbose_string))
+        return to_bool(self._kv_get(self._verbose_string, False))
+
+    # Paths are stored in preferences as str, but the users of these methods generally have the paths as pathlib.Path. So, the user of this API is responsible
+    # for "casting" the path from a pathlib.Path to a str before using these routines.
 
     @typechecked()
     def add_path(self, path: str):

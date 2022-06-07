@@ -23,7 +23,7 @@ class ModHandler(FileSystemEventHandler):
     def on_any_event(self, event):
         super().on_any_event(event)
         log.debug("on_any_event : %s" % event)
-        pref = PropMTimePreferences(self._app_data_folder)
+        pref = PropMTimePreferences(str(self._app_data_folder))
         if not event.is_directory:
             propmtime_event(self._pmt_path, event.src_path, True, pref.get_do_hidden(), pref.get_do_system(), pref.get_process_dot_as_normal(), self.set_blinking)
 
@@ -36,12 +36,12 @@ class PropMTimeWatcher:
         self.schedule()
 
     def schedule(self):
-        pref = PropMTimePreferences(self._app_data_folder)
+        pref = PropMTimePreferences(str(self._app_data_folder))
         self._observer.unschedule_all()
         for path, watcher in pref.get_all_paths().items():
             if watcher:
                 if os.path.exists(path):
-                    event_handler = ModHandler(path, self._app_data_folder, self.set_blinking)
+                    event_handler = ModHandler(Path(path), self._app_data_folder, self.set_blinking)
                     log.info("scheduling watcher : %s" % path)
                     self._observer.schedule(event_handler, path=path, recursive=True)
                 else:
