@@ -14,7 +14,7 @@ log = get_logger(application_name)
 
 @typechecked(always=True)
 def remove_readonly(path: Path):
-    os.chmod(str(path), stat.S_IWRITE)
+    os.chmod(path, stat.S_IWRITE)
 
 
 # sometimes needed for Windows
@@ -85,4 +85,4 @@ def copy_tree(source: Path, dest: Path, subdir: str):
     dest.mkdir(parents=True, exist_ok=True)
     source = Path(source, subdir)
     dest = Path(dest, subdir)
-    shutil.copytree(str(source), str(dest), ignore=shutil.ignore_patterns("__pycache__"), dirs_exist_ok=True)
+    shutil.copytree(source, dest, ignore=shutil.ignore_patterns("__pycache__"), dirs_exist_ok=True)
