@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+from typing import Set
 
 from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QGridLayout, QDialog, QPushButton, QVBoxLayout, QGroupBox, QFileDialog, QLabel
 from PyQt5.Qt import QFontMetrics, QFont, QCheckBox
@@ -41,8 +43,10 @@ class PathsDialog(QDialog):
         log.info("starting PathsDialog")
         self._app_data_folder = app_data_folder
         self._paths_row = 0
-        self._adds = set()  # paths to add to the preferences DB
-        self._removes = set()  # paths to remove from the preferences DB
+        # paths to add to the preferences DB
+        self._adds = set()  # type: Set[Path]
+        # paths to remove from the preferences DB
+        self._removes = set()  # type: Set[Path]
         self._watch_check_boxes = {}
         super().__init__()
 
@@ -83,23 +87,23 @@ class PathsDialog(QDialog):
         standard_button_box = QGroupBox()
         standard_button_layout = QGridLayout()
         standard_button_box.setLayout(standard_button_layout)
-        ok_buttonBox = QDialogButtonBox(QDialogButtonBox.Ok)
-        ok_buttonBox.accepted.connect(self.ok)
-        cancel_buttonBox = QDialogButtonBox(QDialogButtonBox.Cancel)
-        cancel_buttonBox.rejected.connect(self.cancel)
-        standard_button_layout.addWidget(ok_buttonBox, 0, 0)
-        standard_button_layout.addWidget(cancel_buttonBox, 0, 1)
+        ok_button_box = QDialogButtonBox(QDialogButtonBox.Ok)
+        ok_button_box.accepted.connect(self.ok)
+        cancel_button_box = QDialogButtonBox(QDialogButtonBox.Cancel)
+        cancel_button_box.rejected.connect(self.cancel)
+        standard_button_layout.addWidget(ok_button_box, 0, 0)
+        standard_button_layout.addWidget(cancel_button_box, 0, 1)
         dialog_layout.addWidget(standard_button_box)
 
     def add_action(self):
-        new_folder = QFileDialog.getExistingDirectory(parent=self, caption="Add Folder", options=QFileDialog.ShowDirsOnly, directory=os.path.expandvars("~"))
+        new_folder = Path(QFileDialog.getExistingDirectory(parent=self, caption="Add Folder", options=QFileDialog.ShowDirsOnly, directory=os.path.expandvars("~")))
         if new_folder:
             if new_folder in self._removes:
                 self._removes.remove(new_folder)
             self._adds.add(new_folder)
             self.add_path_row(new_folder, False)
 
-    def add_path_row(self, path, watched):
+    def add_path_row(self, path: Path, watched):
 
         # path
         path = str(path)

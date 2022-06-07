@@ -11,7 +11,7 @@ import propmtime
 from propmtime.gui import set_blinking
 import propmtime.os_util
 import test_propmtime
-from propmtime import mkdirs
+from test_propmtime import mkdirs
 
 if propmtime.os_util.is_windows():
     import win32api

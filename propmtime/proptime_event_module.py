@@ -1,10 +1,13 @@
 import os
 from pathlib import Path
 import time
+from typing import Callable, Union
+import threading
 
 from balsa import get_logger
 
-from propmtime import __application_name__, get_file_attributes, get_long_abs_path
+from propmtime import __application_name__, get_file_attributes, get_long_abs_path, is_mac, is_exit_requested
+
 
 log = get_logger(__application_name__)
 
@@ -17,12 +20,17 @@ def _process_file_test(process_hidden: bool, process_system: bool, path: Path):
     return (not (is_hidden or is_system)) or (is_hidden and process_hidden) or (is_system and process_system)
 
 
-def do_propagation(containing_folder, fs_objs, current_time, update: bool, process_hidden: bool, process_system: bool, process_dot_as_normal: bool, set_blinking):
+def _do_propagation(containing_folder, fs_objs, current_time, update: bool, process_hidden: bool, process_system: bool, process_dot_as_normal: bool, set_blinking: Callable):
     """
     propagate the mtime of one folder
     :param containing_folder: parent folder
     :param fs_objs: file system objects (files and folders) to be used to determine the most recent mtime (i.e. the children of parent folder)
     :param current_time: current time in seconds from epoch
+    :param update: True to update the mtime (False to do a "dry run")
+    :param process_hidden: process "hidden" files (from the OS perspective)
+    :param process_system: process "system" files (from the OS perspective)
+    :param process_dot_as_normal: process "dot" files as normal files
+    :param set_blinking: callback to call with True when processing, call with False when processing complete
     :return: file_folders_count, error_count
     """
     error_count = 0
@@ -84,7 +92,7 @@ def do_propagation(containing_folder, fs_objs, current_time, update: bool, proce
 def propmtime_event(root, event_file_path, update, process_hidden: bool, process_system: bool, process_dot_as_normal: bool, set_blinking):
     """
     propmtime upon a watchdog event
-    :param self:
+
     :param root:
     :param event_file_path:
     :param update:
@@ -102,9 +110,60 @@ def propmtime_event(root, event_file_path, update, process_hidden: bool, process
                 raise RuntimeError
             try:
                 fs_objs = os.listdir(current_folder)
-                do_propagation(current_folder, fs_objs, current_time, update, process_hidden, process_system, process_dot_as_normal, set_blinking)
+                _do_propagation(current_folder, fs_objs, current_time, update, process_hidden, process_system, process_dot_as_normal, set_blinking)
                 current_folder = os.path.dirname(current_folder)
             except FileNotFoundError as e:
                 log.info(str(e))
     else:
         log.info("not processed : %s" % event_file_path)
+
+
+class PropMTime(threading.Thread):
+    def __init__(self, root, update: bool, process_hidden: bool, process_system: bool, process_dot_as_normal: bool, running_callback: Union[Callable, None], set_blinking):
+        self._root = root
+        self._update = update
+        self._process_hidden = process_hidden
+        self._process_system = process_system
+        self._process_dot_as_normal = process_dot_as_normal
+        self._running_callback = running_callback
+        self.set_blinking = set_blinking
+        self.error_count = 0
+        self.files_folders_count = 0
+        self.total_time = None
+        super().__init__()
+
+    # scan and propagate the modification time of a folder/directory from its children (files or folders/directories)
+    def run(self):
+
+        start_time = time.time()
+
+        log.debug(f"{self._root} : scan started")
+        log.debug(f"{self._root} : {self._process_hidden=}")
+        log.debug(f"{self._root} : {self._process_system=}")
+        log.debug(f"{self._root} : {self._process_system=}")
+        log.debug(f"{self._root} : {self._update=}")
+
+        for walk_folder, dirs, files in os.walk(self._root, topdown=False):
+            if is_exit_requested():
+                break
+            if walk_folder:
+                # For Mac we have to explicitly check to see if this path is hidden.
+                # For Windows this is taken care of with the hidden file attribute.
+                if (is_mac() and (self._process_hidden or "/." not in walk_folder)) or not is_mac():
+                    ffc, ec = _do_propagation(walk_folder, dirs + files, start_time, self._update, self._process_hidden, self._process_system, self._process_dot_as_normal, self.set_blinking)
+                    self.files_folders_count += ffc
+                    self.error_count += ec
+                else:
+                    log.debug("skipping %s" % walk_folder)
+            else:
+                log.warn("no os.walk root")
+
+        self.total_time = time.time() - start_time
+
+        log.info(f"{self._root} : is_exit_requested : {is_exit_requested()}")
+        log.info(f"{self._root} : file_folders_count : {self.files_folders_count}")
+        log.info(f"{self._root} : error_count : {self.error_count}")
+        log.info(f"{self._root} : total_time : {self.total_time} seconds")
+
+        if self._running_callback is not None:
+            self._running_callback(False)

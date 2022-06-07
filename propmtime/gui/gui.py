@@ -1,4 +1,4 @@
-
+from pathlib import Path
 
 from PyQt5.QtGui import QFontMetrics, QFont
 from PyQt5.QtCore import pyqtSignal
@@ -94,7 +94,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         scan_dialog = ScanDialog(self._app_data_folder, self)
         scan_dialog.exec_()
 
-    def scan_one(self, path, do_hidden: bool, do_system: bool, process_dot_as_normal: bool):
+    def scan_one(self, path: Path, do_hidden: bool, do_system: bool, process_dot_as_normal: bool):
         self.update_tool_tip(True)
         log.debug(f"scan_one : {path,do_hidden,do_system}")
         scanner = PropMTime(path, True, do_hidden, do_system, process_dot_as_normal, self.update_tool_tip_signal.emit)

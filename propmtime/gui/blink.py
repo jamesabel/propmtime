@@ -11,7 +11,7 @@ _blink = None  # the one and only instance of Blink class
 log = get_logger(__application_name__)
 
 
-def set_blinking(value):
+def set_blinking(value: bool):
     """
     Turn blinking on or off.
     :param value: True to turn blinking on, False to turn it off

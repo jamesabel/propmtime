@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+from typing import Callable
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -12,7 +14,7 @@ log = get_logger(__application_name__)
 
 
 class ModHandler(FileSystemEventHandler):
-    def __init__(self, path, app_data_folder, set_blinking):
+    def __init__(self, path: Path, app_data_folder: Path, set_blinking: Callable):
         super().__init__()
         self._pmt_path = path
         self._app_data_folder = app_data_folder
@@ -27,7 +29,7 @@ class ModHandler(FileSystemEventHandler):
 
 
 class PropMTimeWatcher:
-    def __init__(self, app_data_folder, set_blinking):
+    def __init__(self, app_data_folder: Path, set_blinking: Callable):
         self._app_data_folder = app_data_folder
         self.set_blinking = set_blinking
         self._observer = Observer()
