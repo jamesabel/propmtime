@@ -6,6 +6,7 @@ lxml ; sys_platform == 'win32'
 pypiwin32 ; sys_platform == 'win32'
 py2app ; sys_platform == 'darwin'
 pytest
+pytest-qt
 pressenter2exit
 balsa
 tobool
