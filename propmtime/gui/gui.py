@@ -5,12 +5,13 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QSystemTrayIcon, QMenu, QDialog, QApplication
 
 from balsa import get_logger
+from tobool import to_bool
 
 
-from propmtime import __application_name__, __version__, __url__, request_exit_via_event
+from propmtime import __application_name__, __version__, __url__, request_exit_via_event, is_windows
 from propmtime import init_exit_control_event, TIMEOUT, PropMTime
-from propmtime.gui import get_propmtime_paths, get_propmtime_preferences, PreferencesDialog, PropMTimeWatcher, set_blinking
-from propmtime.gui import get_icon, init_blink, request_blink_exit, PathsDialog, ScanDialog
+from propmtime.gui import get_propmtime_paths, get_propmtime_preferences, PreferencesDialog, PropMTimeWatcher
+from propmtime.gui import get_icon, PathsDialog, ScanDialog
 
 log = get_logger(__application_name__)
 
@@ -38,7 +39,7 @@ class About(QDialog):
 
 class PropMTimeSystemTray(QSystemTrayIcon):
 
-    update_tool_tip_signal = pyqtSignal(bool)
+    update_tool_tip_signal = pyqtSignal(str)  # pass in every file and directory that's looked at (as a string)
 
     def __init__(self, app, log_file_path: Path, parent=None):
 
@@ -48,6 +49,8 @@ class PropMTimeSystemTray(QSystemTrayIcon):
 
         self.app = app
         self.log_file_path = log_file_path
+        self.dir_and_file_counter = 0
+        self.prior_invert_state = is_windows()
 
         menu = QMenu(parent)
         menu.addAction("Scan").triggered.connect(self.scan)
@@ -59,24 +62,31 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         menu.addAction("Exit").triggered.connect(self.exit)
         self.setContextMenu(menu)
 
-        self._watcher = PropMTimeWatcher(set_blinking)
+        self._watcher = PropMTimeWatcher(self.update_tool_tip_signal.emit)
 
         self._scanners = []
 
-        init_blink(self)
+        self.update_tool_tip("")  # ready
 
-        self.update_tool_tip(False)
-
-    def update_tool_tip(self, running: bool):
-        if running:
-            tool_tip_string = "Running"
-            set_blinking(True)
+    def update_tool_tip(self, path: str):
+        """
+        Call for every path that's looked at. Pass in an empty string to turn off the blinking.
+        :param path: path of each folder or directory that's looked at
+        """
+        self.dir_and_file_counter += 1
+        if len(path) > 0:
+            self.setToolTip(f"Running ({self.dir_and_file_counter})")
+            invert_icon = to_bool(len(path) % 2)  # assume path lengths are split 50/50 odd vs even
+            if self.prior_invert_state != invert_icon:
+                # avoid calling setIcon if the state hasn't changed
+                self.setIcon(get_icon(invert_icon))
+                self.prior_invert_state = invert_icon
         else:
-            tool_tip_string = "Ready"
-            set_blinking(False)
-        self.setToolTip(tool_tip_string)
+            self.setToolTip("Ready")
+            self.setIcon(get_icon(is_windows()))  # Windows icon is white, MacOS is black
 
     def scan_all(self):
+        self.dir_and_file_counter = 0
         self.stop_scan()  # if any scans are running, stop them first
         pref = get_propmtime_preferences()
         for path in get_propmtime_paths().get():
@@ -87,7 +97,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         scan_dialog.exec_()
 
     def scan_one(self, path: Path, do_hidden: bool, do_system: bool, process_dot_as_normal: bool):
-        self.update_tool_tip(True)
+        self.dir_and_file_counter = 0
         log.debug(f"scan_one : {path,do_hidden,do_system}")
         scanner = PropMTime(path, True, do_hidden, do_system, process_dot_as_normal, self.update_tool_tip_signal.emit)
         scanner.start()
@@ -98,6 +108,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         request_exit_via_event()  # tell all current scans to stop (if any)
         self.join_scans()  # wait for them to stop
         init_exit_control_event()  # re-init the exit control we just set
+        self.update_tool_tip_signal.emit("")  # put icon back to normal
 
     def set_paths(self):
         paths_dialog = PathsDialog()
@@ -130,7 +141,6 @@ class PropMTimeSystemTray(QSystemTrayIcon):
     def exit(self):
         log.info("exit")
         self.stop_scan()  # stop any scans currently underway
-        request_blink_exit()
         if self._watcher:
             self._watcher.request_exit()
         self.hide()

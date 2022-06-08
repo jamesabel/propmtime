@@ -1,4 +1,4 @@
-import functools
+from functools import lru_cache
 import os
 import platform
 from pathlib import Path
@@ -90,17 +90,17 @@ def get_long_abs_path(in_path_parameter: Path) -> Path:
     return abs_path
 
 
-@functools.lru_cache()  # platform doesn't change
+@lru_cache()  # platform doesn't change
 def is_mac() -> bool:
     # darwin
     return platform.system().lower()[0] == "d"
 
 
-@functools.lru_cache()  # platform doesn't change
+@lru_cache()  # platform doesn't change
 def is_linux() -> bool:
     return platform.system().lower()[0] == "l"
 
 
-@functools.lru_cache()  # platform doesn't change
+@lru_cache()  # platform doesn't change
 def is_windows() -> bool:
     return platform.system().lower()[0] == "w"

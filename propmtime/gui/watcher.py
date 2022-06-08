@@ -14,22 +14,22 @@ log = get_logger(__application_name__)
 
 
 class ModHandler(FileSystemEventHandler):
-    def __init__(self, path: Path, set_blinking: Callable):
+    def __init__(self, path: Path, running_callback: Callable):
         super().__init__()
         self._pmt_path = path
-        self.set_blinking = set_blinking
+        self._running_callback = running_callback
 
     def on_any_event(self, event):
         super().on_any_event(event)
         log.debug("on_any_event : %s" % event)
         pref = get_propmtime_preferences()
         if not event.is_directory:
-            propmtime_event(self._pmt_path, event.src_path, True, pref.process_hidden, pref.process_system, pref.process_dot_as_normal, self.set_blinking)
+            propmtime_event(self._pmt_path, event.src_path, True, pref.process_hidden, pref.process_system, pref.process_dot_as_normal, self._running_callback)
 
 
 class PropMTimeWatcher:
-    def __init__(self, set_blinking: Callable):
-        self.set_blinking = set_blinking
+    def __init__(self, running_callback: Callable):
+        self._running_callback = running_callback
         self._observer = Observer()
         self.schedule()
 
@@ -40,7 +40,7 @@ class PropMTimeWatcher:
         for path in pref_paths:
             if path in pref_watched:
                 if os.path.exists(path):
-                    event_handler = ModHandler(Path(path), self.set_blinking)
+                    event_handler = ModHandler(Path(path), self._running_callback)
                     log.info("scheduling watcher : %s" % path)
                     self._observer.schedule(event_handler, path=path, recursive=True)
                 else:

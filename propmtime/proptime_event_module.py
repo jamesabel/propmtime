@@ -23,7 +23,9 @@ def _process_file_test(process_hidden: bool, process_system: bool, path: Path):
 
 
 @typechecked()
-def _do_propagation(containing_folder: Path, fs_objs: List, current_time: float, update: bool, process_hidden: bool, process_system: bool, process_dot_as_normal: bool):
+def _do_propagation(
+    containing_folder: Path, fs_objs: List, current_time: float, update: bool, process_hidden: bool, process_system: bool, process_dot_as_normal: bool, running_callback: Callable
+):
     """
     propagate the mtime of one folder
     :param containing_folder: parent folder
@@ -42,6 +44,7 @@ def _do_propagation(containing_folder: Path, fs_objs: List, current_time: float,
         latest_time = 0.0  # empty folders get an mtime of the epoch
         for fs_obj in fs_objs:
             long_full_path = get_long_abs_path(Path(containing_folder, fs_obj))
+            running_callback(str(long_full_path))
             if not process_dot_as_normal and len(long_full_path.name) > 0 and long_full_path.name[0] == ".":
                 log.debug(f"skipping dot file/folder {long_full_path=}")
             elif _process_file_test(process_hidden, process_system, long_full_path):
@@ -113,7 +116,7 @@ def propmtime_event(root, event_file_path, update, process_hidden: bool, process
                 raise RuntimeError
             try:
                 fs_objs = os.listdir(current_folder)
-                _do_propagation(current_folder, fs_objs, current_time, update, process_hidden, process_system, process_dot_as_normal)
+                _do_propagation(current_folder, fs_objs, current_time, update, process_hidden, process_system, process_dot_as_normal, running_callback)
                 current_folder = os.path.dirname(current_folder)
             except FileNotFoundError as e:
                 log.info(str(e))
@@ -138,8 +141,6 @@ class PropMTime(threading.Thread):
     # scan and propagate the modification time of a folder/directory from its children (files or folders/directories)
     def run(self):
 
-        self._running_callback(True)
-
         start_time = time.time()
 
         log.debug(f"{self._root} : scan started")
@@ -155,7 +156,9 @@ class PropMTime(threading.Thread):
                 # For Mac we have to explicitly check to see if this path is hidden.
                 # For Windows this is taken care of with the hidden file attribute.
                 if (is_mac() and (self._process_hidden or "/." not in walk_folder)) or not is_mac():
-                    ffc, ec = _do_propagation(Path(walk_folder), dirs + files, start_time, self._update, self._process_hidden, self._process_system, self._process_dot_as_normal)
+                    ffc, ec = _do_propagation(
+                        Path(walk_folder), dirs + files, start_time, self._update, self._process_hidden, self._process_system, self._process_dot_as_normal, self._running_callback
+                    )
                     self.files_folders_count += ffc
                     self.error_count += ec
                 else:
@@ -169,5 +172,3 @@ class PropMTime(threading.Thread):
         log.info(f"{self._root} : file_folders_count : {self.files_folders_count}")
         log.info(f"{self._root} : error_count : {self.error_count}")
         log.info(f"{self._root} : total_time : {self.total_time} seconds")
-
-        self._running_callback(False)

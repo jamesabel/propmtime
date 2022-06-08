@@ -93,7 +93,7 @@ def run(is_hidden: bool, is_system: bool, process_dot_folders_as_normal: bool):
     assert math.isclose(os.path.getmtime(system_file_path), system_mtime, abs_tol=2.0)
     assert math.isclose(os.path.getmtime(both_file_path), both_mtime, abs_tol=2.0)
 
-    pmt = PropMTime(data_parent, True, is_hidden, is_system, process_dot_folders_as_normal, lambda x: x)
+    pmt = PropMTime(data_parent, True, is_hidden, is_system, process_dot_folders_as_normal, print)
     pmt.start()
     pmt.join()
 
