@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QLabel, QDialogButtonBox, QGridLayout, QDialog, QCheckBox
 
 from balsa import get_logger
+from tobool import to_bool
 
 from propmtime import __application_name__
 from propmtime.gui import get_propmtime_preferences
@@ -45,10 +46,11 @@ class PreferencesDialog(QDialog):
         preferences_layout.addWidget(cancel_button_box)  # , alignment=QtCore.Qt.AlignLeft)
 
         pref = get_propmtime_preferences()
-        self.hidden_checkbox.setChecked(pref.process_hidden)
-        self.system_checkbox.setChecked(pref.process_system)
-        self.process_dot_as_normal_checkbox.setChecked(pref.process_dot_as_normal)
-        self.verbose_checkbox.setChecked(pref.verbose)
+        # "is True" used since setChecked() needs a bool (will fault on a None)
+        self.hidden_checkbox.setChecked(to_bool(pref.process_hidden) is True)
+        self.system_checkbox.setChecked(to_bool(pref.process_system) is True)
+        self.process_dot_as_normal_checkbox.setChecked(to_bool(pref.process_dot_as_normal) is True)
+        self.verbose_checkbox.setChecked(to_bool(pref.verbose) is True)
 
         self.setLayout(preferences_layout)
 

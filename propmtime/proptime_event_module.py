@@ -172,3 +172,5 @@ class PropMTime(threading.Thread):
         log.info(f"{self._root} : file_folders_count : {self.files_folders_count}")
         log.info(f"{self._root} : error_count : {self.error_count}")
         log.info(f"{self._root} : total_time : {self.total_time} seconds")
+
+        self._running_callback("")  # normal icon
