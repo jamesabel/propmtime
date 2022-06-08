@@ -44,6 +44,12 @@ class PreferencesDialog(QDialog):
         preferences_layout.addWidget(ok_button_box)  # , alignment=QtCore.Qt.AlignLeft)
         preferences_layout.addWidget(cancel_button_box)  # , alignment=QtCore.Qt.AlignLeft)
 
+        pref = get_propmtime_preferences()
+        self.hidden_checkbox.setChecked(pref.process_hidden)
+        self.system_checkbox.setChecked(pref.process_system)
+        self.process_dot_as_normal_checkbox.setChecked(pref.process_dot_as_normal)
+        self.verbose_checkbox.setChecked(pref.verbose)
+
         self.setLayout(preferences_layout)
 
         self.setWindowTitle("Preferences")

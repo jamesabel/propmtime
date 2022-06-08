@@ -4,9 +4,10 @@ from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QGridLayout, QDialog, Q
 from PyQt5.Qt import QFontMetrics, QFont
 
 from balsa import get_logger
+from tobool import to_bool
 
 from propmtime import __application_name__
-from propmtime.gui import get_propmtime_preferences
+from propmtime.gui import get_propmtime_preferences, get_propmtime_paths
 
 """
 Displays a dialog box with the monitor paths.  Allows monitor paths to be added and/or deleted.
@@ -27,7 +28,7 @@ class QScanPushButton(QPushButton):
         pref = get_propmtime_preferences()
         # use the system tray class to do the actual scan since it keeps track of the running scans
         self._system_tray.stop_scan()
-        self._system_tray.scan_one(self._path, pref.process_hidden, pref.process_system, pref.process_dot_as_normal)
+        self._system_tray.scan_one(self._path, to_bool(pref.process_hidden), to_bool(pref.process_system), to_bool(pref.process_dot_as_normal))
 
 
 class ScanDialog(QDialog):
@@ -36,8 +37,6 @@ class ScanDialog(QDialog):
         self._system_tray = system_tray
         self._paths_row = 0
         super().__init__()
-
-        pref = get_propmtime_preferences()
 
         self.setWindowTitle("Scan a Path")
         dialog_layout = QVBoxLayout()
@@ -48,7 +47,7 @@ class ScanDialog(QDialog):
         paths_box.setWindowTitle("Paths")
         self._paths_layout = QGridLayout()
         paths_box.setLayout(self._paths_layout)
-        for path in pref.paths:
+        for path in get_propmtime_paths().get():
             self.add_path_row(path)
         dialog_layout.addWidget(paths_box)
 

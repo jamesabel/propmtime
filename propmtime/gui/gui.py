@@ -40,7 +40,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
 
     update_tool_tip_signal = pyqtSignal(bool)
 
-    def __init__(self, app, log_file_path, parent=None):
+    def __init__(self, app, log_file_path: Path, parent=None):
 
         super().__init__(get_icon(False), parent)
 

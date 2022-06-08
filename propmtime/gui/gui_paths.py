@@ -1,4 +1,5 @@
 import os
+from typing import Callable
 
 from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QGridLayout, QDialog, QPushButton, QVBoxLayout, QGroupBox, QFileDialog, QLabel
 from PyQt5.Qt import QFontMetrics, QFont, QCheckBox
@@ -17,15 +18,13 @@ log = get_logger(__application_name__)
 
 
 class QRemovePushButton(QPushButton):
-    def __init__(self, path: str, path_line, watch_label, watch_check):
+    def __init__(self, path: str, remove_callback: Callable):
         super().__init__("Remove")
         self._path = path
-        self._path_line = path_line
-        self._watch_label = watch_label
-        self._watch_check = watch_check
+        self._remove_callback = remove_callback
 
-    def remove(self):
-        ...
+    def remove(self) -> None:
+        self._remove_callback(self._path)
 
 
 class PathsDialog(QDialog):
@@ -33,9 +32,10 @@ class PathsDialog(QDialog):
         log.info("starting PathsDialog")
         self._paths_row = 0
         self._watch_check_boxes = {}
+        self._path_lines = {}
         super().__init__()
 
-        self.setWindowTitle("Monitor Paths")
+        self.setWindowTitle(__application_name__)
         dialog_layout = QVBoxLayout()
         self.setLayout(dialog_layout)
 
@@ -43,7 +43,7 @@ class PathsDialog(QDialog):
         instructions_box = QGroupBox()
         instructions_layout = QGridLayout()
         instructions_layout.addWidget(QLabel("Only add directories with a reasonable size and that do"))
-        instructions_layout.addWidget(QLabel("not have links to big directories (%s follows links)." % __application_name__))
+        instructions_layout.addWidget(QLabel(f"not have links to big directories ({__application_name__} follows links)."))
         instructions_box.setLayout(instructions_layout)
         dialog_layout.addWidget(instructions_box)
 
@@ -84,15 +84,16 @@ class PathsDialog(QDialog):
         new_folder = QFileDialog.getExistingDirectory(parent=self, caption="Add Folder", options=QFileDialog.ShowDirsOnly, directory=os.path.expandvars("~"))
         if new_folder:
             self.pref_paths.append(new_folder)
+            self.add_path_row(new_folder, False)
 
     def add_path_row(self, path: str, watched: bool):
 
         # path
-        path_line = QLineEdit(path)
-        path_line.setReadOnly(True)
+        self._path_lines[path] = QLineEdit(path)
+        self._path_lines[path].setReadOnly(True)
         width = QFontMetrics(QFont()).width(path) * 1.05
-        path_line.setMinimumWidth(int(round(width)))
-        self._paths_layout.addWidget(path_line, self._paths_row, 0)
+        self._path_lines[path].setMinimumWidth(int(round(width)))
+        self._paths_layout.addWidget(self._path_lines[path], self._paths_row, 0)
 
         # watch label and checkbox
         watcher_label = QLabel("watch:")
@@ -103,11 +104,15 @@ class PathsDialog(QDialog):
         self._paths_layout.addWidget(watcher_check_box, self._paths_row, 2)
 
         # remove button
-        remove_button = QRemovePushButton(path, path_line, watcher_label, watcher_check_box)
+        remove_button = QRemovePushButton(path, self.remove_row)
         remove_button.clicked.connect(remove_button.remove)
         self._paths_layout.addWidget(remove_button, self._paths_row, 3)
 
         self._paths_row += 1
+
+    def remove_row(self, path: str):
+        self._path_lines[path].setText("<removed>")
+        self.pref_paths.remove(path)
 
     def ok(self):
         get_propmtime_paths().set(self.pref_paths)
