@@ -37,8 +37,9 @@ def request_exit_via_event():
     # CLI doesn't need an exit request (pressenter2exit doesn't have or need an 'exit request' - this is taken care
     # of by the user pressing Enter).
     global g_exit_control_event
-    assert isinstance(g_exit_control_event, threading.Event)
-    g_exit_control_event.set()
+    if g_exit_control_event is not None:
+        assert isinstance(g_exit_control_event, threading.Event)
+        g_exit_control_event.set()
 
 
 def init_exit_control_event():

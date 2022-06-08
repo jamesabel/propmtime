@@ -57,7 +57,7 @@ def gui_main():
     app.setQuitOnLastWindowClosed(False)  # so popup dialogs don't close the system tray icon
     system_tray = PropMTimeSystemTray(app, balsa.log_path)
     log.info(f"{getpid()=}")
-    signal.signal(signal.SIGBREAK, system_tray.exit)
+    signal.signal(signal.SIGBREAK, system_tray.exit)  # make system shutdown, logoff, etc. exit the app
     system_tray.show()
     app.exec_()
 
