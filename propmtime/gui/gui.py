@@ -9,7 +9,7 @@ from balsa import get_logger
 
 from propmtime import __application_name__, __version__, __url__, request_exit_via_event
 from propmtime import init_exit_control_event, TIMEOUT, PropMTime
-from propmtime.gui import get_propmtime_preferences, PreferencesDialog, PropMTimeWatcher, set_blinking
+from propmtime.gui import get_propmtime_paths, get_propmtime_preferences, PreferencesDialog, PropMTimeWatcher, set_blinking
 from propmtime.gui import get_icon, init_blink, request_blink_exit, PathsDialog, ScanDialog
 
 log = get_logger(__application_name__)
@@ -77,7 +77,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
     def scan_all(self):
         self.stop_scan()  # if any scans are running, stop them first
         pref = get_propmtime_preferences()
-        for path in pref.paths:
+        for path in get_propmtime_paths().get():
             self.scan_one(Path(path), pref.process_hidden, pref.process_system, pref.process_dot_as_normal)
 
     def scan(self):
