@@ -1,7 +1,7 @@
 pyqt5
-sqlalchemy
 appdirs
 watchdog
+python-dotenv
 lxml ; sys_platform == 'win32'
 pypiwin32 ; sys_platform == 'win32'
 py2app ; sys_platform == 'darwin'
@@ -20,3 +20,4 @@ flake8
 mypy
 PyQt5-stubs
 appdirs-stubs
+pref

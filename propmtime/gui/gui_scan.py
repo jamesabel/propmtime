@@ -1,10 +1,12 @@
+from pathlib import Path
+
 from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QGridLayout, QDialog, QPushButton, QVBoxLayout, QGroupBox
 from PyQt5.Qt import QFontMetrics, QFont
 
 from balsa import get_logger
 
 from propmtime import __application_name__
-from propmtime.gui import PropMTimePreferences
+from propmtime.gui import get_propmtime_preferences
 
 """
 Displays a dialog box with the monitor paths.  Allows monitor paths to be added and/or deleted.
@@ -14,31 +16,28 @@ log = get_logger(__application_name__)
 
 
 class QScanPushButton(QPushButton):
-    def __init__(self, path, label, app_data_folder, system_tray):
+    def __init__(self, path: Path, label: str, system_tray):
         super().__init__("Scan")
         self._path = path
         self._label = label
-        self._app_data_folder = app_data_folder
         self._system_tray = system_tray
 
     def scan(self):
         log.info(f"manual scan of {self._path}")
-        pref = PropMTimePreferences(self._app_data_folder)
+        pref = get_propmtime_preferences()
         # use the system tray class to do the actual scan since it keeps track of the running scans
         self._system_tray.stop_scan()
-        self._system_tray.scan_one(self._path, pref.get_do_hidden(), pref.get_do_system(), pref.get_process_dot_as_normal())
+        self._system_tray.scan_one(self._path, pref.process_hidden, pref.process_system, pref.process_dot_as_normal)
 
 
 class ScanDialog(QDialog):
-    def __init__(self, app_data_folder, system_tray):
+    def __init__(self, system_tray):
         log.debug("starting PathsDialog")
-        self._app_data_folder = app_data_folder
         self._system_tray = system_tray
         self._paths_row = 0
         super().__init__()
 
-        log.debug("preferences folder : %s" % self._app_data_folder)
-        pref = PropMTimePreferences(self._app_data_folder)
+        pref = get_propmtime_preferences()
 
         self.setWindowTitle("Scan a Path")
         dialog_layout = QVBoxLayout()
@@ -49,7 +48,7 @@ class ScanDialog(QDialog):
         paths_box.setWindowTitle("Paths")
         self._paths_layout = QGridLayout()
         paths_box.setLayout(self._paths_layout)
-        for path in pref.get_all_paths():
+        for path in pref.paths:
             self.add_path_row(path)
         dialog_layout.addWidget(paths_box)
 
@@ -57,10 +56,10 @@ class ScanDialog(QDialog):
         standard_button_box = QGroupBox()
         standard_button_layout = QGridLayout()
         standard_button_box.setLayout(standard_button_layout)
-        ok_buttonBox = QDialogButtonBox(QDialogButtonBox.Ok)
-        ok_buttonBox.accepted.connect(self.ok)
+        ok_button_box = QDialogButtonBox(QDialogButtonBox.Ok)
+        ok_button_box.accepted.connect(self.ok)
 
-        standard_button_layout.addWidget(ok_buttonBox, 0, 0)
+        standard_button_layout.addWidget(ok_button_box, 0, 0)
         dialog_layout.addWidget(standard_button_box)
 
     def add_path_row(self, path):
@@ -73,7 +72,7 @@ class ScanDialog(QDialog):
         self._paths_layout.addWidget(path_line, self._paths_row, 0)
 
         # scan button
-        scan_button = QScanPushButton(path, path_line, self._app_data_folder, self._system_tray)
+        scan_button = QScanPushButton(path, path_line.text(), self._system_tray)
         scan_button.clicked.connect(scan_button.scan)
         self._paths_layout.addWidget(scan_button, self._paths_row, 1)
 

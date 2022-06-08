@@ -4,7 +4,23 @@ from setuptools import setup, find_packages
 from propmtime import __application_name__, __version__, __author__
 
 license_file_name = "LICENSE"
-requirements = ["pyqt5", "sqlalchemy", "appdirs", "watchdog", "lxml", "pypiwin32", "balsa", "requests", "ismain", "typeguard", "pressenter2exit", "tobool", "sentry-sdk"]
+requirements = [
+    "pyqt5",
+    "appdirs",
+    "watchdog",
+    "lxml",
+    "pypiwin32",
+    "balsa",
+    "requests",
+    "ismain",
+    "typeguard",
+    "pressenter2exit",
+    "tobool",
+    "sentry-sdk",
+    "pref",
+    "attrs",
+    "python-dotenv",
+]
 
 setup(
     name=__application_name__,

@@ -9,7 +9,7 @@ from balsa import get_logger
 
 from propmtime import __application_name__, __version__, __url__, request_exit_via_event
 from propmtime import init_exit_control_event, TIMEOUT, PropMTime
-from propmtime.gui import PropMTimePreferences, PreferencesDialog, PropMTimeWatcher, set_blinking
+from propmtime.gui import get_propmtime_preferences, PreferencesDialog, PropMTimeWatcher, set_blinking
 from propmtime.gui import get_icon, init_blink, request_blink_exit, PathsDialog, ScanDialog
 
 log = get_logger(__application_name__)
@@ -40,18 +40,14 @@ class PropMTimeSystemTray(QSystemTrayIcon):
 
     update_tool_tip_signal = pyqtSignal(bool)
 
-    def __init__(self, app, app_data_folder, log_file_path, parent=None):
+    def __init__(self, app, log_file_path, parent=None):
 
         super().__init__(get_icon(False), parent)
 
         self.update_tool_tip_signal.connect(self.update_tool_tip)
 
-        pref = PropMTimePreferences(app_data_folder)
-        log.info("preferences path : %s" % pref.get_db_path())
-
         self.app = app
         self.log_file_path = log_file_path
-        self._app_data_folder = app_data_folder
 
         menu = QMenu(parent)
         menu.addAction("Scan").triggered.connect(self.scan)
@@ -63,7 +59,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         menu.addAction("Exit").triggered.connect(self.exit)
         self.setContextMenu(menu)
 
-        self._watcher = PropMTimeWatcher(self._app_data_folder, set_blinking)
+        self._watcher = PropMTimeWatcher(set_blinking)
 
         self._scanners = []
 
@@ -80,18 +76,12 @@ class PropMTimeSystemTray(QSystemTrayIcon):
 
     def scan_all(self):
         self.stop_scan()  # if any scans are running, stop them first
-        log.debug("scan_all started : %s" % self._app_data_folder)
-        pref = PropMTimePreferences(self._app_data_folder)
-        paths = pref.get_all_paths()
-        do_hidden = pref.get_do_hidden()
-        do_system = pref.get_do_system()
-        process_dot_as_normal = pref.get_process_dot_as_normal()
-        log.debug("paths : %s" % paths)
-        for path in paths:
-            self.scan_one(path, do_hidden, do_system, process_dot_as_normal)
+        pref = get_propmtime_preferences()
+        for path in pref.paths:
+            self.scan_one(Path(path), pref.process_hidden, pref.process_system, pref.process_dot_as_normal)
 
     def scan(self):
-        scan_dialog = ScanDialog(self._app_data_folder, self)
+        scan_dialog = ScanDialog(self)
         scan_dialog.exec_()
 
     def scan_one(self, path: Path, do_hidden: bool, do_system: bool, process_dot_as_normal: bool):
@@ -108,7 +98,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         init_exit_control_event()  # re-init the exit control we just set
 
     def set_paths(self):
-        paths_dialog = PathsDialog(self._app_data_folder)
+        paths_dialog = PathsDialog()
         paths_dialog.exec_()
 
     def join_scans(self):
@@ -126,7 +116,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         # don't change things in the middle of a scan
         request_exit_via_event()
         self.join_scans()
-        preferences_dialog = PreferencesDialog(self._app_data_folder)
+        preferences_dialog = PreferencesDialog()
         preferences_dialog.exec_()
         # todo: update log verbosity (when balsa adds that capability)
         init_exit_control_event()

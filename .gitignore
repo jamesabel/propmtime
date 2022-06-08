@@ -63,3 +63,4 @@ app/
 installers/
 .eggs/
 *.spec
+.env
