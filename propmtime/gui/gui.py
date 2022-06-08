@@ -10,7 +10,7 @@ from balsa import get_logger
 from propmtime import __application_name__, __version__, __url__, request_exit_via_event
 from propmtime import init_exit_control_event, TIMEOUT, PropMTime
 from propmtime.gui import PropMTimePreferences, PreferencesDialog, PropMTimeWatcher, set_blinking
-from propmtime.gui import get_icon, init_blink, request_blink_exit, PathsDialog, ScanDialog, init_preferences_db
+from propmtime.gui import get_icon, init_blink, request_blink_exit, PathsDialog, ScanDialog
 
 log = get_logger(__application_name__)
 

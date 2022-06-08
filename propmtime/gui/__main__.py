@@ -1,4 +1,6 @@
 import sys
+import signal
+from os import getpid
 
 from ismain import is_main
 import requests
@@ -48,8 +50,9 @@ def gui_main():
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)  # so popup dialogs don't close the system tray icon
     system_tray = PropMTimeSystemTray(app, app_data_folder, balsa.log_path)
+    log.info(f"{getpid()=}")
+    signal.signal(signal.SIGBREAK, system_tray.exit)
     system_tray.show()
-    # app.aboutToQuit.connect(system_tray.exit)
     app.exec_()
 
 
