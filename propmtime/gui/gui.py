@@ -70,8 +70,10 @@ class PropMTimeSystemTray(QSystemTrayIcon):
     def update_tool_tip(self, running: bool):
         if running:
             tool_tip_string = "Running"
+            set_blinking(True)
         else:
             tool_tip_string = "Ready"
+            set_blinking(False)
         self.setToolTip(tool_tip_string)
 
     def scan_all(self):
