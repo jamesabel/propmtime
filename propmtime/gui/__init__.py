@@ -7,3 +7,4 @@ from .watcher import PropMTimeWatcher
 from .gui_paths import PathsDialog
 from .gui_scan import ScanDialog
 from .gui import PropMTimeSystemTray
+from .__main__ import gui_main
