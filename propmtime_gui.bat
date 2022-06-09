@@ -1,1 +1,3 @@
-venv\Scripts\python.exe main.py
+call venv\Scripts\activate.bat
+python.exe -m propmtime.gui -v
+call deactivate

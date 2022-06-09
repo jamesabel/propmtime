@@ -1,11 +1,12 @@
 pyqt5
-sqlalchemy
 appdirs
 watchdog
+python-dotenv
 lxml ; sys_platform == 'win32'
 pypiwin32 ; sys_platform == 'win32'
 py2app ; sys_platform == 'darwin'
 pytest
+pytest-qt
 pressenter2exit
 balsa
 tobool
@@ -15,3 +16,9 @@ pyship
 black
 wheel
 typeguard
+sentry-sdk
+flake8
+mypy
+PyQt5-stubs
+appdirs-stubs
+pref

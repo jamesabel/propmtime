@@ -5,7 +5,8 @@ from balsa import get_logger, Balsa
 
 import test_propmtime
 
-from propmtime import __application_name__, __author__, rmdir
+from propmtime import __application_name__, __author__
+from test_propmtime import rmdir
 
 log = get_logger(__file__)
 

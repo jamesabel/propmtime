@@ -1,18 +1,17 @@
-import sys
-import appdirs
+from pathlib import Path
 
 from PyQt5.QtGui import QFontMetrics, QFont
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QSystemTrayIcon, QMenu, QDialog, QApplication
 
-from balsa import get_logger, Balsa
-import requests
-from requests.exceptions import ConnectionError
+from balsa import get_logger
+from tobool import to_bool
 
-from propmtime import __application_name__, __version__, __url__, __author__, request_exit_via_event
-from propmtime import init_exit_control_event
-from propmtime import TIMEOUT, PropMTimePreferences, PreferencesDialog, PropMTimeWatcher, get_arguments, PropMTime
-from propmtime import get_icon, init_blink, request_blink_exit, PathsDialog, ScanDialog, init_preferences_db
+
+from propmtime import __application_name__, __version__, __url__, request_exit_via_event, is_windows
+from propmtime import init_exit_control_event, TIMEOUT, PropMTime
+from propmtime.gui import get_propmtime_paths, get_propmtime_preferences, PreferencesDialog, PropMTimeWatcher
+from propmtime.gui import get_icon, PathsDialog, ScanDialog
 
 log = get_logger(__application_name__)
 
@@ -29,30 +28,29 @@ class About(QDialog):
         self.show()
 
     def add_line(self, label, value, row_number, layout):
+        value = str(value)
         layout.addWidget(QLabel(label), row_number, 0)
         log_dir_widget = QLineEdit(value)
         log_dir_widget.setReadOnly(True)
         width = QFontMetrics(QFont()).width(value) * 1.05
-        log_dir_widget.setMinimumWidth(width)
+        log_dir_widget.setMinimumWidth(int(round(width)))
         layout.addWidget(log_dir_widget, row_number + 1, 0)
 
 
 class PropMTimeSystemTray(QSystemTrayIcon):
 
-    update_tool_tip_signal = pyqtSignal(bool)
+    update_tool_tip_signal = pyqtSignal(str)  # pass in every file and directory that's looked at (as a string)
 
-    def __init__(self, app, app_data_folder, log_file_path, parent=None):
+    def __init__(self, app, log_file_path: Path, parent=None):
 
         super().__init__(get_icon(False), parent)
 
         self.update_tool_tip_signal.connect(self.update_tool_tip)
 
-        pref = PropMTimePreferences(app_data_folder)
-        log.info("preferences path : %s" % pref.get_db_path())
-
         self.app = app
         self.log_file_path = log_file_path
-        self._app_data_folder = app_data_folder
+        self.dir_and_file_counter = 0
+        self.prior_invert_state = is_windows()
 
         menu = QMenu(parent)
         menu.addAction("Scan").triggered.connect(self.scan)
@@ -64,39 +62,42 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         menu.addAction("Exit").triggered.connect(self.exit)
         self.setContextMenu(menu)
 
-        self._watcher = PropMTimeWatcher(self._app_data_folder)
+        self._watcher = PropMTimeWatcher(self.update_tool_tip_signal.emit)
 
         self._scanners = []
 
-        init_blink(self)
+        self.update_tool_tip("")  # ready
 
-        self.update_tool_tip(False)
-
-    def update_tool_tip(self, running: bool):
-        if running:
-            tool_tip_string = "Running"
+    def update_tool_tip(self, path: str):
+        """
+        Call for every path that's looked at. Pass in an empty string to turn off the blinking.
+        :param path: path of each folder or directory that's looked at
+        """
+        self.dir_and_file_counter += 1
+        if len(path) > 0:
+            self.setToolTip(f"Running ({self.dir_and_file_counter})")
+            invert_icon = to_bool(len(path) % 2)  # assume path lengths are split 50/50 odd vs even
+            if self.prior_invert_state != invert_icon:
+                # avoid calling setIcon if the state hasn't changed
+                self.setIcon(get_icon(invert_icon))
+                self.prior_invert_state = invert_icon
         else:
-            tool_tip_string = "Ready"
-        self.setToolTip(tool_tip_string)
+            self.setToolTip("Ready")
+            self.setIcon(get_icon(is_windows()))  # Windows icon is white, MacOS is black
 
     def scan_all(self):
+        self.dir_and_file_counter = 0
         self.stop_scan()  # if any scans are running, stop them first
-        log.debug("scan_all started : %s" % self._app_data_folder)
-        pref = PropMTimePreferences(self._app_data_folder)
-        paths = pref.get_all_paths()
-        do_hidden = pref.get_do_hidden()
-        do_system = pref.get_do_system()
-        process_dot_as_normal = pref.get_process_dot_as_normal()
-        log.debug("paths : %s" % paths)
-        for path in paths:
-            self.scan_one(path, do_hidden, do_system, process_dot_as_normal)
+        pref = get_propmtime_preferences()
+        for path in get_propmtime_paths().get():
+            self.scan_one(Path(path), pref.process_hidden, pref.process_system, pref.process_dot_as_normal)
 
     def scan(self):
-        scan_dialog = ScanDialog(self._app_data_folder, self)
+        scan_dialog = ScanDialog(self)
         scan_dialog.exec_()
 
-    def scan_one(self, path, do_hidden: bool, do_system: bool, process_dot_as_normal: bool):
-        self.update_tool_tip(True)
+    def scan_one(self, path: Path, do_hidden: bool, do_system: bool, process_dot_as_normal: bool):
+        self.dir_and_file_counter = 0
         log.debug(f"scan_one : {path,do_hidden,do_system}")
         scanner = PropMTime(path, True, do_hidden, do_system, process_dot_as_normal, self.update_tool_tip_signal.emit)
         scanner.start()
@@ -107,9 +108,10 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         request_exit_via_event()  # tell all current scans to stop (if any)
         self.join_scans()  # wait for them to stop
         init_exit_control_event()  # re-init the exit control we just set
+        self.update_tool_tip_signal.emit("")  # put icon back to normal
 
     def set_paths(self):
-        paths_dialog = PathsDialog(self._app_data_folder)
+        paths_dialog = PathsDialog()
         paths_dialog.exec_()
 
     def join_scans(self):
@@ -127,7 +129,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         # don't change things in the middle of a scan
         request_exit_via_event()
         self.join_scans()
-        preferences_dialog = PreferencesDialog(self._app_data_folder)
+        preferences_dialog = PreferencesDialog()
         preferences_dialog.exec_()
         # todo: update log verbosity (when balsa adds that capability)
         init_exit_control_event()
@@ -139,47 +141,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
     def exit(self):
         log.info("exit")
         self.stop_scan()  # stop any scans currently underway
-        request_blink_exit()
         if self._watcher:
             self._watcher.request_exit()
         self.hide()
         QApplication.exit()  # todo: what should this parameter be?
-
-
-def gui_main():
-
-    args = get_arguments()
-
-    sentry_dsn_url = r"https://api.abel.co/apps/propmtime/sentrydsn"
-    sentry_dsn_issue = None
-    try:
-        sentry_dsn = requests.get(sentry_dsn_url).text
-        if not (sentry_dsn.startswith("http") and "@sentry.io" in sentry_dsn):
-            sentry_dsn = None
-            sentry_dsn_issue = f"{sentry_dsn} not a valid Sentry DSN"
-    except ConnectionError:
-        sentry_dsn = None
-        sentry_dsn_issue = f"ConnectionError on Sentry DSN : {sentry_dsn_url}"
-
-    app_data_folder = appdirs.user_config_dir(appname=__application_name__, appauthor=__author__)
-    init_preferences_db(app_data_folder)
-    preferences = PropMTimePreferences(app_data_folder)
-
-    balsa = Balsa(__application_name__, __author__, gui=True)
-    if sentry_dsn is not None:
-        balsa.use_sentry = True
-        balsa.sentry_dsn = sentry_dsn
-    balsa.verbose = preferences.get_verbose()
-    balsa.init_logger_from_args(args)
-
-    log.info(f"Sentry DSN URL : {sentry_dsn_url}")
-    log.info(f"Sentry DSN : {sentry_dsn}")
-    log.info(f"sentry_dsn_issue : {sentry_dsn_issue}")
-
-    init_exit_control_event()
-
-    app = QApplication(sys.argv)
-    app.setQuitOnLastWindowClosed(False)  # so popup dialogs don't close the system tray icon
-    system_tray = PropMTimeSystemTray(app, app_data_folder, balsa.log_path)
-    system_tray.show()
-    app.exec_()

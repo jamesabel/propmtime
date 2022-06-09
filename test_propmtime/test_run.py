@@ -7,12 +7,10 @@ import math
 from balsa import get_logger
 from typeguard import typechecked
 
-import propmtime
-import propmtime.os_util
-import test_propmtime
-from propmtime import mkdirs
+from propmtime import is_mac, is_windows, PropMTime
+from test_propmtime import mkdirs, child_folder, data_parent
 
-if propmtime.os_util.is_windows():
+if is_windows():
     import win32api
     import win32con
 
@@ -47,11 +45,11 @@ def file_creator(file_path: Path, is_hidden: bool, is_system: bool, init: bool):
     file_name = file_path.name
     if init:
         mkdirs(folder, remove_first=True)
-    if propmtime.os_util.is_mac() and is_hidden:
+    if is_mac() and is_hidden:
         assert file_name[0] == "."
     full_path = Path(folder, file_name)
     full_path.write_text(str(full_path.absolute()))  # just put something in the file ... this is as good as anything
-    if propmtime.os_util.is_windows():
+    if is_windows():
         if is_hidden:
             win32api.SetFileAttributes(str(full_path), win32con.FILE_ATTRIBUTE_HIDDEN)
         if is_system:
@@ -77,17 +75,17 @@ def check_mtimes(parent_dir: Path, file_path: Path, is_hidden: bool, is_system: 
 
 def run(is_hidden: bool, is_system: bool, process_dot_folders_as_normal: bool):
     file_name = "myfile.txt"
-    if propmtime.os_util.is_mac() and is_hidden:
+    if is_mac() and is_hidden:
         file_name = "." + file_name
-    file_path = Path(test_propmtime.child_folder, file_name)
+    file_path = Path(child_folder, file_name)
     file_creator(file_path, False, False, True)
 
     # put in system and hidden files at later times
-    system_file_path = Path(test_propmtime.child_folder, "my_system_file.txt")
+    system_file_path = Path(child_folder, "my_system_file.txt")
     file_creator(system_file_path, False, True, False)
-    hidden_file_path = Path(test_propmtime.child_folder, "my_hidden_file.txt")
+    hidden_file_path = Path(child_folder, "my_hidden_file.txt")
     file_creator(hidden_file_path, True, False, False)
-    both_file_path = Path(test_propmtime.child_folder, "my_hidden_system_file.txt")
+    both_file_path = Path(child_folder, "my_hidden_system_file.txt")
     file_creator(both_file_path, True, True, False)
 
     # make sure the file mtimes are correct
@@ -95,11 +93,11 @@ def run(is_hidden: bool, is_system: bool, process_dot_folders_as_normal: bool):
     assert math.isclose(os.path.getmtime(system_file_path), system_mtime, abs_tol=2.0)
     assert math.isclose(os.path.getmtime(both_file_path), both_mtime, abs_tol=2.0)
 
-    pmt = propmtime.PropMTime(test_propmtime.data_parent, True, is_hidden, is_system, process_dot_folders_as_normal, lambda x: x)
+    pmt = PropMTime(data_parent, True, is_hidden, is_system, process_dot_folders_as_normal, print)
     pmt.start()
     pmt.join()
 
-    check_mtimes(test_propmtime.data_parent, file_path, is_hidden, is_system)
+    check_mtimes(data_parent, file_path, is_hidden, is_system)
 
     # make sure the original files times have not changed
     assert math.isclose(os.path.getmtime(hidden_file_path), hidden_mtime, abs_tol=2.0)

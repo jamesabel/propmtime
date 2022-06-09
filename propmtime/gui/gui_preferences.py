@@ -1,9 +1,10 @@
 from PyQt5.QtWidgets import QLabel, QDialogButtonBox, QGridLayout, QDialog, QCheckBox
-from PyQt5.QtCore import Qt
 
 from balsa import get_logger
+from tobool import to_bool
 
-from propmtime import __application_name__, PropMTimePreferences
+from propmtime import __application_name__
+from propmtime.gui import get_propmtime_preferences
 
 
 """
@@ -14,45 +15,58 @@ log = get_logger(__application_name__)
 
 
 class PreferencesDialog(QDialog):
-    def __init__(self, app_data_folder):
-        log.debug("preferences folder : %s" % app_data_folder)
-
-        pref = PropMTimePreferences(app_data_folder)
+    def __init__(self):
 
         super().__init__()
 
         preferences_layout = QGridLayout()
-        row = 0
-        self.selections = []
-        self.selections.append({"str": "Process Hidden Files/Folders", "set": pref.set_do_hidden, "get": pref.get_do_hidden})
-        self.selections.append({"str": "Process System Files/Folders", "set": pref.set_do_system, "get": pref.get_do_system})
-        self.selections.append({"str": 'Process "dot" Files and Folders as Normal (Instead of as System)', "set": pref.set_process_dot_as_normal, "get": pref.get_process_dot_as_normal})
-        self.selections.append({"str": "Verbose", "set": pref.set_verbose, "get": pref.get_verbose})
-        for ss in self.selections:
-            preferences_layout.addWidget(QLabel(ss["str"]), row, 0)
-            ss["cb"] = QCheckBox()
-            if ss["get"]():
-                ss["cb"].setCheckState(Qt.Checked)
-            preferences_layout.addWidget(ss["cb"], row, 1)
-            row += 1
 
-        ok_buttonBox = QDialogButtonBox(QDialogButtonBox.Ok)
-        ok_buttonBox.accepted.connect(self.ok)
-        cancel_buttonBox = QDialogButtonBox(QDialogButtonBox.Cancel)
-        cancel_buttonBox.rejected.connect(self.cancel)
+        preferences_layout.addWidget(QLabel("Process Hidden Files/Folders"), 0, 0)
+        self.hidden_checkbox = QCheckBox()
+        preferences_layout.addWidget(self.hidden_checkbox, 0, 1)
 
-        preferences_layout.addWidget(ok_buttonBox)  # , alignment=QtCore.Qt.AlignLeft)
-        preferences_layout.addWidget(cancel_buttonBox)  # , alignment=QtCore.Qt.AlignLeft)
+        preferences_layout.addWidget(QLabel("Process System Files/Folders"), 1, 0)
+        self.system_checkbox = QCheckBox()
+        preferences_layout.addWidget(self.system_checkbox, 1, 1)
+
+        preferences_layout.addWidget(QLabel('Process "dot" Files and Folders as Normal (instead of as System)'), 2, 0)
+        self.process_dot_as_normal_checkbox = QCheckBox()
+        preferences_layout.addWidget(self.process_dot_as_normal_checkbox, 2, 1)
+
+        preferences_layout.addWidget(QLabel("Verbose"), 3, 0)
+        self.verbose_checkbox = QCheckBox()
+        preferences_layout.addWidget(self.verbose_checkbox, 3, 1)
+
+        ok_button_box = QDialogButtonBox(QDialogButtonBox.Ok)
+        ok_button_box.accepted.connect(self.ok)
+        cancel_button_box = QDialogButtonBox(QDialogButtonBox.Cancel)
+        cancel_button_box.rejected.connect(self.cancel)
+
+        preferences_layout.addWidget(ok_button_box)  # , alignment=QtCore.Qt.AlignLeft)
+        preferences_layout.addWidget(cancel_button_box)  # , alignment=QtCore.Qt.AlignLeft)
+
+        pref = get_propmtime_preferences()
+        # "is True" used since setChecked() needs a bool (will fault on a None)
+        self.hidden_checkbox.setChecked(to_bool(pref.process_hidden) is True)
+        self.system_checkbox.setChecked(to_bool(pref.process_system) is True)
+        self.process_dot_as_normal_checkbox.setChecked(to_bool(pref.process_dot_as_normal) is True)
+        self.verbose_checkbox.setChecked(to_bool(pref.verbose) is True)
 
         self.setLayout(preferences_layout)
 
         self.setWindowTitle("Preferences")
 
     def ok(self):
-        for selection in self.selections:
-            if selection["cb"].isChecked() != selection["get"]():
-                log.info("new preferences for %s : %s --> %s" % (selection["str"], str(selection["get"]()), str(selection["cb"].isChecked())))
-                selection["set"](selection["cb"].isChecked())
+        pref = get_propmtime_preferences()
+
+        if self.hidden_checkbox.isChecked() != pref.process_hidden:
+            pref.process_hidden = self.hidden_checkbox.isChecked()
+        if self.system_checkbox.isChecked() != pref.process_system:
+            pref.process_system = self.system_checkbox.isChecked()
+        if self.process_dot_as_normal_checkbox.isChecked() != pref.process_dot_as_normal:
+            pref.process_dot_as_normal = self.process_dot_as_normal_checkbox.isChecked()
+        if self.verbose_checkbox.isChecked() != pref.verbose:
+            pref.verbose = self.verbose_checkbox.isChecked()
         self.close()
 
     def cancel(self):

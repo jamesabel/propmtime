@@ -1,11 +1,13 @@
 import os
+from typing import Callable
 
 from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QGridLayout, QDialog, QPushButton, QVBoxLayout, QGroupBox, QFileDialog, QLabel
 from PyQt5.Qt import QFontMetrics, QFont, QCheckBox
 
 from balsa import get_logger
 
-from propmtime import __application_name__, PropMTimePreferences
+from propmtime import __application_name__
+from propmtime.gui import get_propmtime_paths, get_propmtime_watched
 
 
 """
@@ -16,39 +18,24 @@ log = get_logger(__application_name__)
 
 
 class QRemovePushButton(QPushButton):
-    def __init__(self, path, path_line, watch_label, watch_check, removes, adds):
+    def __init__(self, path: str, remove_callback: Callable):
         super().__init__("Remove")
         self._path = path
-        self._removes = removes
-        self._adds = adds
-        self._path_line = path_line
-        self._watch_label = watch_label
-        self._watch_check = watch_check
+        self._remove_callback = remove_callback
 
-    def remove(self):
-        if self._path in self._adds:
-            self._adds.remove(self._path)
-        self._removes.add(self._path)
-        self.deleteLater()  # remove row associated with this path from dialog box
-        self._path_line.deleteLater()
-        self._watch_label.deleteLater()
-        self._watch_check.deleteLater()
+    def remove(self) -> None:
+        self._remove_callback(self._path)
 
 
 class PathsDialog(QDialog):
-    def __init__(self, app_data_folder):
+    def __init__(self):
         log.info("starting PathsDialog")
-        self._app_data_folder = app_data_folder
         self._paths_row = 0
-        self._adds = set()  # paths to add to the preferences DB
-        self._removes = set()  # paths to remove from the preferences DB
         self._watch_check_boxes = {}
+        self._path_lines = {}
         super().__init__()
 
-        log.info("preferences folder : %s" % self._app_data_folder)
-        pref = PropMTimePreferences(self._app_data_folder)
-
-        self.setWindowTitle("Monitor Paths")
+        self.setWindowTitle(__application_name__)
         dialog_layout = QVBoxLayout()
         self.setLayout(dialog_layout)
 
@@ -56,7 +43,7 @@ class PathsDialog(QDialog):
         instructions_box = QGroupBox()
         instructions_layout = QGridLayout()
         instructions_layout.addWidget(QLabel("Only add directories with a reasonable size and that do"))
-        instructions_layout.addWidget(QLabel("not have links to big directories (%s follows links)." % __application_name__))
+        instructions_layout.addWidget(QLabel(f"not have links to big directories ({__application_name__} follows links)."))
         instructions_box.setLayout(instructions_layout)
         dialog_layout.addWidget(instructions_box)
 
@@ -65,8 +52,11 @@ class PathsDialog(QDialog):
         paths_box.setWindowTitle("Paths")
         self._paths_layout = QGridLayout()
         paths_box.setLayout(self._paths_layout)
-        for path, watched in pref.get_all_paths().items():
-            self.add_path_row(path, watched)
+
+        self.pref_paths = get_propmtime_paths().get()
+        self.pref_watched = get_propmtime_watched().get()
+        for path in self.pref_paths:
+            self.add_path_row(path, path in self.pref_watched)
         dialog_layout.addWidget(paths_box)
 
         # "add path" button
@@ -82,30 +72,28 @@ class PathsDialog(QDialog):
         standard_button_box = QGroupBox()
         standard_button_layout = QGridLayout()
         standard_button_box.setLayout(standard_button_layout)
-        ok_buttonBox = QDialogButtonBox(QDialogButtonBox.Ok)
-        ok_buttonBox.accepted.connect(self.ok)
-        cancel_buttonBox = QDialogButtonBox(QDialogButtonBox.Cancel)
-        cancel_buttonBox.rejected.connect(self.cancel)
-        standard_button_layout.addWidget(ok_buttonBox, 0, 0)
-        standard_button_layout.addWidget(cancel_buttonBox, 0, 1)
+        ok_button_box = QDialogButtonBox(QDialogButtonBox.Ok)
+        ok_button_box.accepted.connect(self.ok)
+        cancel_button_box = QDialogButtonBox(QDialogButtonBox.Cancel)
+        cancel_button_box.rejected.connect(self.cancel)
+        standard_button_layout.addWidget(ok_button_box, 0, 0)
+        standard_button_layout.addWidget(cancel_button_box, 0, 1)
         dialog_layout.addWidget(standard_button_box)
 
     def add_action(self):
         new_folder = QFileDialog.getExistingDirectory(parent=self, caption="Add Folder", options=QFileDialog.ShowDirsOnly, directory=os.path.expandvars("~"))
         if new_folder:
-            if new_folder in self._removes:
-                self._removes.remove(new_folder)
-            self._adds.add(new_folder)
+            self.pref_paths.append(new_folder)
             self.add_path_row(new_folder, False)
 
-    def add_path_row(self, path, watched):
+    def add_path_row(self, path: str, watched: bool):
 
         # path
-        path_line = QLineEdit(path)
-        path_line.setReadOnly(True)
+        self._path_lines[path] = QLineEdit(path)
+        self._path_lines[path].setReadOnly(True)
         width = QFontMetrics(QFont()).width(path) * 1.05
-        path_line.setMinimumWidth(width)
-        self._paths_layout.addWidget(path_line, self._paths_row, 0)
+        self._path_lines[path].setMinimumWidth(int(round(width)))
+        self._paths_layout.addWidget(self._path_lines[path], self._paths_row, 0)
 
         # watch label and checkbox
         watcher_label = QLabel("watch:")
@@ -116,26 +104,18 @@ class PathsDialog(QDialog):
         self._paths_layout.addWidget(watcher_check_box, self._paths_row, 2)
 
         # remove button
-        remove_button = QRemovePushButton(path, path_line, watcher_label, watcher_check_box, self._removes, self._adds)
+        remove_button = QRemovePushButton(path, self.remove_row)
         remove_button.clicked.connect(remove_button.remove)
         self._paths_layout.addWidget(remove_button, self._paths_row, 3)
 
         self._paths_row += 1
 
+    def remove_row(self, path: str):
+        self._path_lines[path].setText("<removed>")
+        self.pref_paths.remove(path)
+
     def ok(self):
-        pref = PropMTimePreferences(self._app_data_folder)
-        for add in self._adds:
-            log.info("adding : %s" % add)
-            if add not in pref.get_all_paths():
-                pref.add_path(add)
-        for remove in self._removes:
-            log.info("removing : %s" % remove)
-            pref.remove_path(remove)
-        for path, watch_check_box in self._watch_check_boxes.items():
-            if path not in self._removes:
-                is_checked = watch_check_box.isChecked()
-                if pref.is_path_watched(path) != is_checked:
-                    pref.set_path_watched(path, is_checked)
+        get_propmtime_paths().set(self.pref_paths)
         self.close()
 
     def cancel(self):

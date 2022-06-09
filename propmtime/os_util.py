@@ -1,13 +1,9 @@
-import distutils.util
-import functools
+from functools import lru_cache
 import os
 import platform
-import shutil
-import time
 from pathlib import Path
-import stat
 from platform import architecture
-from typing import Tuple, Union
+from typing import Tuple
 
 import win32api
 import win32con
@@ -20,97 +16,22 @@ from propmtime import __application_name__
 
 log = get_logger(__application_name__)
 
-special_system_files = ["Thumbs.db",  # Windows thumbs but somehow isn't always a system or hidden file
-                        ".DS_Store"  # This supposedly Apple macOS file seems to make it into lots of places
-                        ]
+# "Thumbs.db": Windows thumbs but somehow isn't always a system or hidden file
+# ".DS_Store": This supposedly Apple macOS file seems to make it into lots of places
+special_system_files = ["Thumbs.db", ".DS_Store"]
 
 
-@typechecked(always=True)
-def get_target_os() -> (str, None):
+@typechecked()
+def get_target_os() -> str:
     if is_windows():
         bit_string, os_string = architecture()
         target_os = f"{os_string[0:3].lower()}{bit_string[0:2]}"
     else:
-        target_os = None
+        raise NotImplementedError("unsupported OS")
     return target_os
 
 
-@typechecked(always=True)
-def remove_readonly(path: Path):
-    os.chmod(str(path), stat.S_IWRITE)
-
-
-# sometimes needed for Windows
-def _remove_readonly_onerror(func, path, excinfo):
-    os.chmod(path, stat.S_IWRITE)
-    func(path)
-
-
-@typechecked(always=True)
-def rmdir(p: Path, log_function=log.error) -> bool:
-    retry_count = 0
-    retry_limit = 4
-    delete_ok = False
-    delay = 1.0
-    while p.exists() and retry_count < retry_limit:
-        try:
-            shutil.rmtree(p, onerror=_remove_readonly_onerror)
-            delete_ok = True
-        except FileNotFoundError as e:
-            log.debug(str(e))  # this can happen when first doing the shutil.rmtree()
-            time.sleep(delay)
-        except PermissionError as e:
-            log.info(str(e))
-            time.sleep(delay)
-        except OSError as e:
-            log.info(str(e))
-            time.sleep(delay)
-        time.sleep(0.1)
-        if p.exists:
-            time.sleep(delay)
-        retry_count += 1
-        delay *= 2.0
-    if p.exists():
-        log_function(f"could not remove {p} ({retry_count=})", stack_info=True)
-    else:
-        delete_ok = True
-    return delete_ok
-
-
-@typechecked(always=True)
-def mkdirs(d: Path, remove_first: bool = False, log_function=log.error):
-    """
-    make directories recursively, optionally deleting first
-    :param d: directory to make
-    :param remove_first: True to delete directory contents first
-    :param log_function: log function
-    """
-    if remove_first:
-        rmdir(d, log_function)
-    # sometimes when os.makedirs exits the dir is not actually there
-    count = 600
-    while count > 0 and not d.exists():
-        try:
-            # for some reason we can get the FileNotFoundError exception
-            d.mkdir(parents=True, exist_ok=True)
-        except FileNotFoundError:
-            pass
-        if not d.exists():
-            time.sleep(0.1)
-        count -= 1
-    if not d.exists():
-        log_function(f'could not mkdirs "{d}" ({d.absolute()})')
-
-
-@typechecked(always=True)
-def copy_tree(source: Path, dest: Path, subdir: str):
-    # copy the tree, but don't copy things like __pycache__
-    dest.mkdir(parents=True, exist_ok=True)
-    source = Path(source, subdir)
-    dest = Path(dest, subdir)
-    shutil.copytree(str(source), str(dest), ignore=shutil.ignore_patterns("__pycache__"), dirs_exist_ok=True)
-
-
+@typechecked()
 def get_file_attributes(in_path: Path) -> Tuple[bool, bool]:
     hidden = False
     system = False
@@ -127,7 +48,7 @@ def get_file_attributes(in_path: Path) -> Tuple[bool, bool]:
         if attrib & win32con.FILE_ATTRIBUTE_SYSTEM:
             system = True
     elif is_mac() or is_linux():
-        if "/." in in_path:
+        if "/." in in_path.name:
             hidden = True
         else:
             name = in_path.name
@@ -143,10 +64,10 @@ def get_file_attributes(in_path: Path) -> Tuple[bool, bool]:
     return hidden, system
 
 
-def get_long_abs_path(in_path_parameter: Union[Path, str, None]) -> Union[Path, None]:
-    if in_path_parameter is None:
-        abs_path = None
-    elif is_windows():
+@typechecked()
+def get_long_abs_path(in_path_parameter: Path) -> Path:
+
+    if is_windows():
         # https://twitter.com/brettsky/status/1404521184008413184
         in_path = os.fspath(in_path_parameter)
 
@@ -169,17 +90,17 @@ def get_long_abs_path(in_path_parameter: Union[Path, str, None]) -> Union[Path, 
     return abs_path
 
 
-@functools.lru_cache()  # platform doesn't change
-def is_mac():
+@lru_cache()  # platform doesn't change
+def is_mac() -> bool:
     # darwin
     return platform.system().lower()[0] == "d"
 
 
-@functools.lru_cache()  # platform doesn't change
-def is_linux():
+@lru_cache()  # platform doesn't change
+def is_linux() -> bool:
     return platform.system().lower()[0] == "l"
 
 
-@functools.lru_cache()  # platform doesn't change
-def is_windows():
+@lru_cache()  # platform doesn't change
+def is_windows() -> bool:
     return platform.system().lower()[0] == "w"
