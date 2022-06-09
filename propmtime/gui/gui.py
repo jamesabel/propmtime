@@ -76,11 +76,13 @@ class PropMTimeSystemTray(QSystemTrayIcon):
         self.dir_and_file_counter += 1
         if len(path) > 0:
             self.setToolTip(f"Running ({self.dir_and_file_counter})")
-            invert_icon = to_bool(len(path) % 2)  # assume path lengths are split 50/50 odd vs even
-            if self.prior_invert_state != invert_icon:
-                # avoid calling setIcon if the state hasn't changed
-                self.setIcon(get_icon(invert_icon))
-                self.prior_invert_state = invert_icon
+            # only update the icon every so often (it still blinks fast enough this way)
+            if self.dir_and_file_counter % 10 == 0:
+                invert_icon = to_bool(len(path) % 2)  # assume path lengths are split 50/50 odd vs even
+                if self.prior_invert_state != invert_icon:
+                    # avoid calling setIcon if the state hasn't changed
+                    self.setIcon(get_icon(invert_icon))
+                    self.prior_invert_state = invert_icon
         else:
             self.setToolTip("Ready")
             self.setIcon(get_icon(is_windows()))  # Windows icon is white, MacOS is black
