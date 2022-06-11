@@ -5,7 +5,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QSystemTrayIcon, QMenu, QDialog, QApplication
 
 from balsa import get_logger
-from tobool import to_bool
+from tobool import to_bool_strict
 
 
 from propmtime import __application_name__, __version__, __url__, request_exit_via_event, is_windows
@@ -78,7 +78,7 @@ class PropMTimeSystemTray(QSystemTrayIcon):
             self.setToolTip(f"Running ({self.dir_and_file_counter})")
             # only update the icon every so often (it still blinks fast enough this way)
             if self.dir_and_file_counter % 10 == 0:
-                invert_icon = to_bool(len(path) % 2)  # assume path lengths are split 50/50 odd vs even
+                invert_icon = to_bool_strict(len(path) % 2)  # assume path lengths are split 50/50 odd vs even
                 if self.prior_invert_state != invert_icon:
                     # avoid calling setIcon if the state hasn't changed
                     self.setIcon(get_icon(invert_icon))

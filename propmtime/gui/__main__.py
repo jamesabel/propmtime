@@ -7,7 +7,7 @@ import requests
 from requests.exceptions import ConnectionError
 from balsa import Balsa, get_logger
 from PyQt5.QtWidgets import QApplication
-from tobool import to_bool
+from tobool import to_bool_strict
 from dotenv import load_dotenv, find_dotenv
 
 from propmtime import get_arguments, __application_name__, __author__, init_exit_control_event
@@ -22,7 +22,7 @@ def gui_main():
 
     args = get_arguments()
 
-    if to_bool(environ.get("PROPMTIME_DISABLE_SENTRY", False)):
+    if to_bool_strict(environ.get("PROPMTIME_DISABLE_SENTRY", False)):
         sentry_dsn = None
         sentry_dsn_url = None
         sentry_dsn_issue = None

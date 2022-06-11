@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QGridLayout, QDialog, Q
 from PyQt5.Qt import QFontMetrics, QFont
 
 from balsa import get_logger
-from tobool import to_bool
+from tobool import to_bool_strict
 
 from propmtime import __application_name__
 from propmtime.gui import get_propmtime_preferences, get_propmtime_paths
@@ -28,7 +28,7 @@ class QScanPushButton(QPushButton):
         pref = get_propmtime_preferences()
         # use the system tray class to do the actual scan since it keeps track of the running scans
         self._system_tray.stop_scan()
-        self._system_tray.scan_one(self._path, to_bool(pref.process_hidden), to_bool(pref.process_system), to_bool(pref.process_dot_as_normal))
+        self._system_tray.scan_one(self._path, to_bool_strict(pref.process_hidden), to_bool_strict(pref.process_system), to_bool_strict(pref.process_dot_as_normal))
 
 
 class ScanDialog(QDialog):
