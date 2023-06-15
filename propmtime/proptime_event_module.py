@@ -3,6 +3,8 @@ from pathlib import Path
 import time
 from typing import Callable, List
 import threading
+import zipfile
+from datetime import datetime
 
 from balsa import get_logger
 from typeguard import typechecked
@@ -20,6 +22,40 @@ def _process_file_test(process_hidden: bool, process_system: bool, path: Path):
         return True
     is_hidden, is_system = get_file_attributes(path)
     return (not (is_hidden or is_system)) or (is_hidden and process_hidden) or (is_system and process_system)
+
+
+@typechecked()
+def zip_info_to_mtime(file_object: zipfile.ZipInfo) -> float:
+    dt = file_object.date_time
+    mtime_datetime = datetime(year=dt[0], month=dt[1], day=dt[2], hour=dt[3], minute=dt[4], second=dt[5])
+    mtime = mtime_datetime.timestamp()
+    return mtime
+
+
+@typechecked()
+def set_mtime(path: Path, new_mtime: float, update: bool) -> int:
+    """
+    set the file or folder's mtime
+    :param path:
+    :param new_mtime:
+    :param update:
+    :return:
+    """
+    error_count = 0
+    try:
+        existing_mtime = os.path.getmtime(path)
+        # don't change it if it's close (there can be rounding errors, etc.)
+        if abs(new_mtime - existing_mtime) > 2 and update:
+            log.debug(f'updating "{path}" to {new_mtime}')
+            os.utime(path, (new_mtime, new_mtime))
+    except OSError as e:
+        # these are things like access denied, and we don't want to see that under normal operation
+        log.debug(e)
+        error_count = 1
+    except UnicodeEncodeError as e:
+        log.error(e)
+        error_count = 1
+    return error_count
 
 
 @typechecked()
@@ -48,14 +84,32 @@ def _do_propagation(
             if not process_dot_as_normal and len(long_full_path.name) > 0 and long_full_path.name[0] == ".":
                 log.debug(f"skipping dot file/folder {long_full_path=}")
             elif _process_file_test(process_hidden, process_system, long_full_path):
-                files_folders_count += 1
-                mtime = None
-                try:
-                    mtime = os.path.getmtime(long_full_path)
-                except OSError as e:
-                    log.info(e)  # quite possible to get an "access error"
-                    error_count += 1
-                if mtime and mtime > current_time:
+                if long_full_path.name.lower().endswith(".zip"):
+                    # count files in a zip as if they exist unzipped
+                    mtime = None  # the most recent mtime of all the files in the zip
+                    try:
+                        with zipfile.ZipFile(long_full_path) as zip_file:
+                            for file_object in zip_file.infolist():
+                                file_mtime = zip_info_to_mtime(file_object)
+                                if mtime is None or file_mtime > mtime:
+                                    mtime = file_mtime
+                                    files_folders_count += 1
+                    except (zipfile.BadZipFile, OSError) as e:
+                        log.info(e)
+                        error_count += 1
+                    if mtime is not None:
+                        error_count += set_mtime(long_full_path, mtime, update)
+
+                else:
+                    files_folders_count += 1
+                    mtime = None
+                    try:
+                        mtime = os.path.getmtime(long_full_path)
+                    except OSError as e:
+                        log.info(e)  # quite possible to get an "access error"
+                        error_count += 1
+
+                if mtime is not None and mtime > current_time:
                     # Sometimes mtime can be in the future (and thus invalid).
                     # Try to use the ctime if it is.
                     try:
@@ -63,28 +117,13 @@ def _do_propagation(
                     except OSError as e:
                         log.warn(e)
                         error_count += 1
-                if mtime and mtime > current_time:
-                    # still in the future - ignore it
-                    mtime = None
-                if mtime:
-                    # make sure it's still not in the future ... if it is, ignore it
-                    if mtime <= current_time:
-                        latest_time = max(mtime, latest_time)
+
+                # if still in the future ignore it
+                if mtime is not None and mtime <= current_time:
+                    latest_time = max(mtime, latest_time)
 
         containing_folder_long_path = get_long_abs_path(containing_folder)
-        try:
-            mtime = os.path.getmtime(containing_folder_long_path)
-            # don't change it if it's close (there can be rounding errors, etc.)
-            if abs(latest_time - mtime) > 2 and update:
-                log.debug("updating %s to %s" % (containing_folder_long_path, mtime))
-                os.utime(containing_folder_long_path, (latest_time, latest_time))
-        except OSError as e:
-            # these are things like access denied and we don't want to see that under normal operation
-            log.debug(e)
-            error_count += 1
-        except UnicodeEncodeError as e:
-            log.error(e)
-            error_count += 1
+        error_count += set_mtime(containing_folder_long_path, latest_time, update)
 
     else:
         log.error(f"{containing_folder_path=} is not a directory")
@@ -140,7 +179,6 @@ class PropMTime(threading.Thread):
 
     # scan and propagate the modification time of a folder/directory from its children (files or folders/directories)
     def run(self):
-
         start_time = time.time()
 
         log.debug(f"{self._root} : scan started")

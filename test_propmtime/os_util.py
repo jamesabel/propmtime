@@ -12,7 +12,7 @@ from test_propmtime import application_name
 log = get_logger(application_name)
 
 
-@typechecked(always=True)
+@typechecked()
 def remove_readonly(path: Path):
     os.chmod(path, stat.S_IWRITE)
 
@@ -23,7 +23,7 @@ def _remove_readonly_onerror(func, path, excinfo):
     func(path)
 
 
-@typechecked(always=True)
+@typechecked()
 def rmdir(p: Path, log_function=log.error) -> bool:
     retry_count = 0
     retry_limit = 4
@@ -43,7 +43,7 @@ def rmdir(p: Path, log_function=log.error) -> bool:
             log.info(str(e))
             time.sleep(delay)
         time.sleep(0.1)
-        if p.exists:
+        if p.exists():
             time.sleep(delay)
         retry_count += 1
         delay *= 2.0
@@ -54,7 +54,7 @@ def rmdir(p: Path, log_function=log.error) -> bool:
     return delete_ok
 
 
-@typechecked(always=True)
+@typechecked()
 def mkdirs(d: Path, remove_first: bool = False, log_function=log.error):
     """
     make directories recursively, optionally deleting first
@@ -79,7 +79,7 @@ def mkdirs(d: Path, remove_first: bool = False, log_function=log.error):
         log_function(f'could not mkdirs "{d}" ({d.absolute()})')
 
 
-@typechecked(always=True)
+@typechecked()
 def copy_tree(source: Path, dest: Path, subdir: str):
     # copy the tree, but don't copy things like __pycache__
     dest.mkdir(parents=True, exist_ok=True)
