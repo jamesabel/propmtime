@@ -66,7 +66,6 @@ def get_file_attributes(in_path: Path) -> Tuple[bool, bool]:
 
 @typechecked()
 def get_long_abs_path(in_path_parameter: Path) -> Path:
-
     if is_windows():
         # https://twitter.com/brettsky/status/1404521184008413184
         in_path = os.fspath(in_path_parameter)

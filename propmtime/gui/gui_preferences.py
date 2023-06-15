@@ -16,7 +16,6 @@ log = get_logger(__application_name__)
 
 class PreferencesDialog(QDialog):
     def __init__(self):
-
         super().__init__()
 
         preferences_layout = QGridLayout()

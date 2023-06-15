@@ -14,7 +14,6 @@ log = get_logger(__application_name__)
 
 @lru_cache()
 def get_icon(invert: bool):
-
     # https://stackoverflow.com/questions/13350631/simple-color-fill-qicons-in-qt
     pixmap = QPixmap(":icon.png")
     assert pixmap is not None

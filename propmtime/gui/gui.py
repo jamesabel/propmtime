@@ -38,11 +38,9 @@ class About(QDialog):
 
 
 class PropMTimeSystemTray(QSystemTrayIcon):
-
     update_tool_tip_signal = pyqtSignal(str)  # pass in every file and directory that's looked at (as a string)
 
     def __init__(self, app, log_file_path: Path, parent=None):
-
         super().__init__(get_icon(False), parent)
 
         self.update_tool_tip_signal.connect(self.update_tool_tip)

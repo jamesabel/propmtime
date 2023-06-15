@@ -17,7 +17,6 @@ log = get_logger(__application_name__)
 
 
 def gui_main():
-
     load_dotenv(find_dotenv())
 
     args = get_arguments()

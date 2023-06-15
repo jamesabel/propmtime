@@ -4,7 +4,6 @@ from propmtime import get_arguments, log_selections, init_exit_control_cli, __ap
 
 
 def cli_main():
-
     args = get_arguments()
 
     balsa = Balsa(__application_name__, __author__)

@@ -87,7 +87,6 @@ class PathsDialog(QDialog):
             self.add_path_row(new_folder, False)
 
     def add_path_row(self, path: str, watched: bool):
-
         # path
         self._path_lines[path] = QLineEdit(path)
         self._path_lines[path].setReadOnly(True)

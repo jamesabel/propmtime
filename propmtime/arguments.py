@@ -18,7 +18,6 @@ def log_selections(args):
 
 
 def get_arguments():
-
     desc = textwrap.dedent(
         """
 Most OSs (including Windows and MacOS) only change the modification time of a folder/directory based on its immediate
