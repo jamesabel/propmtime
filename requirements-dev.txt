@@ -4,21 +4,30 @@ watchdog
 python-dotenv
 lxml ; sys_platform == 'win32'
 pypiwin32 ; sys_platform == 'win32'
-py2app ; sys_platform == 'darwin'
-pytest
-pytest-qt
 pressenter2exit
 balsa
 tobool
 requests
 ismain
-pyship
 black
 wheel
 typeguard
 sentry-sdk
+pref
+#
+# freezer/installer
+pyship
+py2app ; sys_platform == 'darwin'
+#
+# linters
 flake8
 mypy
 PyQt5-stubs
 appdirs-stubs
-pref
+#
+# testing
+pytest
+pytest-qt
+pytest-pycharm
+coverage
+pytest-cov
