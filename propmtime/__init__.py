@@ -1,6 +1,6 @@
 # PEP 440 compliant
 # adhere to http://semver.org/
-__version__ = "0.9.0"
+__version__ = "0.9.1"
 
 __author__ = "abel"
 __application_name__ = "propmtime"
