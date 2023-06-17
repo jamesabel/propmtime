@@ -95,7 +95,7 @@ def _do_propagation(
                                     mtime = file_mtime
                                     files_folders_count += 1
                     except (zipfile.BadZipFile, OSError) as e:
-                        log.info(e)
+                        log.info(f'"{long_full_path}",{e}')
                         error_count += 1
                     if mtime is not None:
                         error_count += set_mtime(long_full_path, mtime, update)
