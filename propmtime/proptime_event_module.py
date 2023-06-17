@@ -25,13 +25,13 @@ def _process_file_test(process_hidden: bool, process_system: bool, path: Path):
 
 
 @typechecked()
-def zip_info_to_mtime(file_object: zipfile.ZipInfo) -> float:
+def zip_info_to_mtime(file_object: zipfile.ZipInfo, zip_path: Path) -> float:
     dt = file_object.date_time
     try:
         mtime_datetime = datetime(year=dt[0], month=dt[1], day=dt[2], hour=dt[3], minute=dt[4], second=dt[5])
         mtime = mtime_datetime.timestamp()
     except ValueError as e:
-        log.warning(f'"{file_object.filename}",{e}')
+        log.warning(f'filename="{file_object.filename}",{zip_path=},{dt=},{e}')
         mtime = 0.0  # so this file won't be selected as the most recent
     return mtime
 
@@ -94,7 +94,7 @@ def _do_propagation(
                     try:
                         with zipfile.ZipFile(long_full_path) as zip_file:
                             for file_object in zip_file.infolist():
-                                file_mtime = zip_info_to_mtime(file_object)
+                                file_mtime = zip_info_to_mtime(file_object, long_full_path)
                                 if mtime is None or file_mtime > mtime:
                                     mtime = file_mtime
                                     files_folders_count += 1
