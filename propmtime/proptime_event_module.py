@@ -31,7 +31,9 @@ def zip_info_to_mtime(file_object: zipfile.ZipInfo, zip_path: Path) -> float:
         mtime_datetime = datetime(year=dt[0], month=dt[1], day=dt[2], hour=dt[3], minute=dt[4], second=dt[5])
         mtime = mtime_datetime.timestamp()
     except ValueError as e:
-        log.warning(f'filename="{file_object.filename}",{zip_path=},{dt=},{e}')
+        # We have seen zip files with internal files that have no mtime. Handle that as gracefully as possible.
+        # e.g.: dt=(2019, 11, 0, 23, 54, 6),day is out of range for month
+        log.info(f'filename="{file_object.filename}",{zip_path=},{dt=},{e}')
         mtime = 0.0  # so this file won't be selected as the most recent
     return mtime
 
@@ -88,9 +90,10 @@ def _do_propagation(
             if not process_dot_as_normal and len(long_full_path.name) > 0 and long_full_path.name[0] == ".":
                 log.debug(f"skipping dot file/folder {long_full_path=}")
             elif _process_file_test(process_hidden, process_system, long_full_path):
+                mtime = None  # if a file has a .zip extension but isn't really a zip, treat it as a regular file below
+
                 if long_full_path.name.lower().endswith(".zip"):
                     # count files in a zip as if they exist unzipped
-                    mtime = None  # the most recent mtime of all the files in the zip
                     try:
                         with zipfile.ZipFile(long_full_path) as zip_file:
                             for file_object in zip_file.infolist():
@@ -102,15 +105,15 @@ def _do_propagation(
                         log.info(f'"{long_full_path}",{e}')
                         error_count += 1
                     if mtime is not None:
-                        error_count += set_mtime(long_full_path, mtime, update)
+                        error_count += set_mtime(long_full_path, mtime, update)  # set mtime of zip file itself
 
-                else:
+                if mtime is None:
                     files_folders_count += 1
                     mtime = None
                     try:
                         mtime = os.path.getmtime(long_full_path)
                     except OSError as e:
-                        log.info(e)  # quite possible to get an "access error"
+                        log.info(e)  # possible to get an "access error"
                         error_count += 1
 
                 if mtime is not None and mtime > current_time:
