@@ -27,8 +27,12 @@ def _process_file_test(process_hidden: bool, process_system: bool, path: Path):
 @typechecked()
 def zip_info_to_mtime(file_object: zipfile.ZipInfo) -> float:
     dt = file_object.date_time
-    mtime_datetime = datetime(year=dt[0], month=dt[1], day=dt[2], hour=dt[3], minute=dt[4], second=dt[5])
-    mtime = mtime_datetime.timestamp()
+    try:
+        mtime_datetime = datetime(year=dt[0], month=dt[1], day=dt[2], hour=dt[3], minute=dt[4], second=dt[5])
+        mtime = mtime_datetime.timestamp()
+    except ValueError as e:
+        log.warning(f'"{file_object.filename}",{e}')
+        mtime = 0.0  # so this file won't be selected as the most recent
     return mtime
 
 
